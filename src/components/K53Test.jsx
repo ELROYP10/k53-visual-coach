@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 const signSVG={
 stop:`<div class="sign-wrap"><svg viewBox="0 0 120 120"><polygon points="35,5 85,5 115,35 115,85 85,115 35,115 5,85 5,35" fill="#c62828" stroke="#fff" stroke-width="5"/><text x="60" y="70" text-anchor="middle" fill="white" font-size="27" font-weight="700">STOP</text></svg></div>`,
@@ -122,14 +123,133 @@ function formatTime(totalSeconds) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function K53Test({ onExit }) {
-  const questions = useMemo(() => prepareQuestions(), []);
+function getMistakePracticeDuration(questionCount) {
+  const secondsFromCount = questionCount * 60;
+  return Math.min(3600, Math.max(600, secondsFromCount));
+}
+
+function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
+  const normalizedFocus = focusCategory ? focusCategory.trim() : null;
+  const normalizedMistakes = Array.isArray(focusMistakes) ? focusMistakes.filter(Boolean) : [];
+  const isMistakePractice = normalizedMistakes.length > 0;
+
+  const questions = useMemo(() => {
+    const allQuestions = prepareQuestions();
+
+    if (normalizedMistakes.length > 0) {
+      const mistakeSet = new Set(normalizedMistakes.map((value) => String(value).trim()));
+      return allQuestions.filter((question) => mistakeSet.has(question.question.trim()));
+    }
+
+    if (!normalizedFocus) {
+      return allQuestions;
+    }
+
+    const categoryMap = {
+      "Rules of the Road": R,
+      "Road Traffic Signs": S,
+      "Vehicle Controls": C,
+    };
+
+    const matchedSection = categoryMap[normalizedFocus] || normalizedFocus;
+
+    return allQuestions.filter((question) => question.section === matchedSection);
+  }, [normalizedFocus, normalizedMistakes]);
+
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null));
   const [flags, setFlags] = useState(() => Array(questions.length).fill(false));
-  const [secondsLeft, setSecondsLeft] = useState(3600);
+  const initialSeconds = isMistakePractice
+    ? getMistakePracticeDuration(normalizedMistakes.length)
+    : 3600;
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [submitted, setSubmitted] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const saveCurrentResult = async () => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      return sessionError.message || "Unable to read your current session.";
+    }
+
+    const user = session?.user ?? null;
+    if (!user) {
+      return "You must be signed in to save this test result.";
+    }
+
+    const resultToSave = {
+      user_id: user.id,
+      rules_score: sectionResults[R].correct,
+      signs_score: sectionResults[S].correct,
+      controls_score: sectionResults[C].correct,
+      total_score: totalScore,
+      passed,
+    };
+
+    const { data: insertedRows, error } = await supabase
+      .from("test_results")
+      .insert([resultToSave])
+      .select();
+
+    if (error) {
+      return error.message || "Unable to save your test result.";
+    }
+
+    const insertedResult = insertedRows?.[0];
+    if (!insertedResult?.id) {
+      return "Main result saved, but the result id was not returned.";
+    }
+
+    const detailRows = questions
+      .map((question, index) => {
+        const selectedAnswer = answers[index];
+        const isMissingOrWrong = selectedAnswer === null || selectedAnswer !== question.correct;
+
+        if (!isMissingOrWrong) {
+          return null;
+        }
+
+        return {
+          result_id: insertedResult.id,
+          user_id: user.id,
+          question_text: question.question,
+          category: question.section,
+          learner_answer: selectedAnswer === null ? null : question.options[selectedAnswer],
+          correct_answer: question.options[question.correct],
+          explanation: question.explanation,
+        };
+      })
+      .filter(Boolean);
+
+    if (detailRows.length === 0) {
+      return null;
+    }
+
+    const { error: detailError } = await supabase
+      .from("test_result_details")
+      .insert(detailRows);
+
+    if (detailError) {
+      return `Main test result saved, but detailed mistake data could not be saved: ${detailError.message}`;
+    }
+
+    return null;
+  };
+
+  const finalizeSubmission = async () => {
+    const resultError = await saveCurrentResult();
+    if (resultError) {
+      setSaveError(resultError);
+    } else {
+      setSaveError("");
+    }
+    setSubmitted(true);
+  };
 
   useEffect(() => {
     if (submitted) return;
@@ -137,7 +257,7 @@ function K53Test({ onExit }) {
       setSecondsLeft((value) => {
         if (value <= 1) {
           window.clearInterval(timer);
-          setSubmitted(true);
+          finalizeSubmission();
           return 0;
         }
         return value - 1;
@@ -146,6 +266,7 @@ function K53Test({ onExit }) {
     return () => window.clearInterval(timer);
   }, [submitted]);
 
+  const totalQuestions = questions.length;
   const question = questions[current];
   const answeredCount = answers.filter((a) => a !== null).length;
 
@@ -155,17 +276,53 @@ function K53Test({ onExit }) {
     [C]: { correct: 0, total: 8, target: 6 },
   };
 
+  const activeSectionResults = normalizedFocus
+    ? Object.fromEntries(
+        Object.entries(sectionResults).filter(([section]) => {
+          const focusMap = {
+            "Rules of the Road": R,
+            "Road Traffic Signs": S,
+            "Vehicle Controls": C,
+          };
+          return section === (focusMap[normalizedFocus] || normalizedFocus);
+        })
+      )
+    : sectionResults;
+
   let totalScore = 0;
+  const mistakeSectionStats = {};
+
   questions.forEach((item, index) => {
     if (answers[index] === item.correct) {
       totalScore += 1;
-      sectionResults[item.section].correct += 1;
+      if (isMistakePractice) {
+        mistakeSectionStats[item.section] ??= { correct: 0, total: 0 };
+        mistakeSectionStats[item.section].correct += 1;
+      } else if (activeSectionResults[item.section]) {
+        activeSectionResults[item.section].correct += 1;
+      }
+    }
+
+    if (isMistakePractice) {
+      mistakeSectionStats[item.section] ??= { correct: 0, total: 0 };
+      mistakeSectionStats[item.section].total += 1;
     }
   });
 
-  const passed = Object.values(sectionResults).every(
-    (result) => result.correct >= result.target
-  );
+  const resultSectionSummary = isMistakePractice
+    ? Object.fromEntries(
+        Object.entries(mistakeSectionStats).map(([section, result]) => [
+          section,
+          { ...result, target: result.total },
+        ])
+      )
+    : activeSectionResults;
+
+  const passed = isMistakePractice
+    ? true
+    : Object.values(activeSectionResults).every(
+        (result) => result.correct >= result.target
+      );
 
   const chooseAnswer = (index) => {
     const updated = [...answers];
@@ -179,12 +336,14 @@ function K53Test({ onExit }) {
     setFlags(updated);
   };
 
-  const submitTest = () => {
+  const submitTest = async () => {
     const unanswered = answers.filter((a) => a === null).length;
     const message = unanswered
       ? `You still have ${unanswered} unanswered question(s). Submit anyway?`
       : "Submit your completed test?";
-    if (window.confirm(message)) setSubmitted(true);
+
+    if (!window.confirm(message)) return;
+    await finalizeSubmission();
   };
 
   const restartTest = () => window.location.reload();
@@ -204,7 +363,7 @@ function K53Test({ onExit }) {
     timerRow: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" },
     exit: { border: "1px solid #475569", background: "#111827", color: "white", borderRadius: 11, padding: "11px 16px", fontWeight: 800, cursor: "pointer" },
     progressTrack: { height: 8, background: "#1e293b", borderRadius: 999, overflow: "hidden", marginBottom: 18 },
-    progressFill: { height: "100%", background: "#22c55e", width: `${((current + 1) / questions.length) * 100}%` },
+    progressFill: { height: "100%", background: "#22c55e", width: `${((current + 1) / totalQuestions) * 100}%` },
     answered: { color: "#94a3b8", marginBottom: 14 },
     card: { background: "#111827", border: "1px solid #334155", borderRadius: 18, padding: 24 },
     badge: { display: "inline-block", color: "#86efac", background: "#052e16", borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 800 },
@@ -262,20 +421,34 @@ function K53Test({ onExit }) {
     return (
       <section style={styles.page}>
         <div style={styles.resultCard}>
-          <p style={styles.eyebrow}>COMPLETE K53 PRACTICE RESULT</p>
-          <h2 style={{ fontSize: 34, marginBottom: 8, color: passed ? "#86efac" : "#fca5a5" }}>{passed ? "PASS" : "NOT YET"}</h2>
-          <div style={{ fontSize: 54, fontWeight: 900, color: "#86efac" }}>{totalScore}/64</div>
+          <p style={styles.eyebrow}>{isMistakePractice ? "PRACTICE MY MISTAKES" : "COMPLETE K53 PRACTICE RESULT"}</p>
+          <h2 style={{ fontSize: 34, marginBottom: 8, color: passed ? "#86efac" : "#fca5a5" }}>
+            {isMistakePractice ? "PRACTICE COMPLETE" : passed ? "PASS" : "NOT YET"}
+          </h2>
+          <div style={{ fontSize: 54, fontWeight: 900, color: "#86efac" }}>{totalScore}/{totalQuestions}</div>
           <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
-            {passed ? "You met all three section targets in this practice test." : "One or more section targets were missed. Review your mistakes and practise the weaker area."}
+            {isMistakePractice
+              ? `You completed ${totalScore}/${totalQuestions} in this focused mistake-practice set.`
+              : passed
+                ? "You met all three section targets in this practice test."
+                : "One or more section targets were missed. Review your mistakes and practise the weaker area."}
           </p>
 
+          {saveError && (
+            <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(127, 29, 29, 0.28)", border: "1px solid rgba(248, 113, 113, 0.5)", color: "#fecaca", fontWeight: 700 }}>
+              {saveError}
+            </div>
+          )}
+
           <div style={styles.sections}>
-            {Object.entries(sectionResults).map(([section, result]) => (
+            {Object.entries(resultSectionSummary).map(([section, result]) => (
               <div key={section} style={styles.sectionCard}>
                 <small style={{ color: "#94a3b8" }}>{section}</small>
                 <strong style={{ display: "block", fontSize: 28, margin: "8px 0" }}>{result.correct}/{result.total}</strong>
-                <span style={{ color: result.correct >= result.target ? "#86efac" : "#fca5a5" }}>
-                  Target {result.target}/{result.total} — {result.correct >= result.target ? "Pass" : "Needs work"}
+                <span style={{ color: isMistakePractice ? "#86efac" : result.correct >= result.target ? "#86efac" : "#fca5a5" }}>
+                  {isMistakePractice
+                    ? `Score ${result.correct}/${result.total}`
+                    : `Target ${result.target}/${result.total} — ${result.correct >= result.target ? "Pass" : "Needs work"}`}
                 </span>
               </div>
             ))}
@@ -296,8 +469,14 @@ function K53Test({ onExit }) {
       <div style={styles.shell}>
         <div style={styles.header}>
           <div>
-            <p style={styles.eyebrow}>FULL 64-QUESTION PRACTICE</p>
-            <h2 style={styles.heading}>Question {current + 1} of {questions.length}</h2>
+            <p style={styles.eyebrow}>
+              {isMistakePractice
+                ? "PRACTICE MY MISTAKES"
+                : normalizedFocus
+                  ? `${totalQuestions}-QUESTION ${normalizedFocus.toUpperCase()} PRACTICE`
+                  : "FULL 64-QUESTION PRACTICE"}
+            </p>
+            <h2 style={styles.heading}>Question {current + 1} of {totalQuestions}</h2>
           </div>
           <div style={styles.timerRow}>
             <strong style={{ color: secondsLeft <= 300 ? "#fca5a5" : "#86efac" }}>⏱ {formatTime(secondsLeft)}</strong>
@@ -306,7 +485,7 @@ function K53Test({ onExit }) {
         </div>
 
         <div style={styles.progressTrack}><div style={styles.progressFill} /></div>
-        <div style={styles.answered}>Answered {answeredCount}/64</div>
+        <div style={styles.answered}>Answered {answeredCount}/{totalQuestions}</div>
 
         <div style={styles.card}>
           <span style={styles.badge}>{question.section}</span>

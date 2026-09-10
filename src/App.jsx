@@ -1,12 +1,97 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import K53Test from "./components/K53Test";
+import Auth from "./components/Auth";
+import Dashboard from "./components/Dashboard";
+import MistakePractice from "./components/MistakePractice";
+import { supabase } from "./lib/supabase";
 
 function App() {
   const [showTest, setShowTest] = useState(false);
+  const [showMistakePractice, setShowMistakePractice] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [focusCategory, setFocusCategory] = useState(null);
+  const [focusMistakes, setFocusMistakes] = useState([]);
+  const [mistakePracticeTexts, setMistakePracticeTexts] = useState([]);
+  const [user, setUser] = useState(null);
 
-  if (showTest) {
-    return <K53Test onExit={() => setShowTest(false)} />;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+  }, []);
+
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+if (showDashboard && user) {
+  return (
+    <Dashboard
+      user={user}
+      onStartTest={() => {
+        setFocusCategory(null);
+        setFocusMistakes([]);
+        setShowDashboard(false);
+        setShowAuth(false);
+        setShowTest(true);
+      }}
+      onPracticeWeakAreas={(weakestCategory) => {
+        setFocusCategory(weakestCategory);
+        setFocusMistakes([]);
+        setShowDashboard(false);
+        setShowAuth(false);
+        setShowTest(true);
+      }}
+      onPracticeMistakes={(mistakeQuestions) => {
+        setFocusCategory(null);
+        setFocusMistakes([]);
+        setMistakePracticeTexts(mistakeQuestions || []);
+        setShowDashboard(false);
+        setShowAuth(false);
+        setShowTest(false);
+        setShowMistakePractice(true);
+      }}
+    />
+  );
+}
+
+if (showAuth) {
+  return <Auth onClose={() => setShowAuth(false)} />;
+} 
+if (showMistakePractice) {
+  return (
+    <MistakePractice
+      mistakeTexts={mistakePracticeTexts}
+      onExit={() => {
+        setMistakePracticeTexts([]);
+        setShowMistakePractice(false);
+        setShowDashboard(true);
+      }}
+    />
+  );
+}
+if (showTest) {
+    return (
+      <K53Test
+        focusCategory={focusCategory}
+        focusMistakes={focusMistakes}
+        onExit={() => {
+          setFocusCategory(null);
+          setFocusMistakes([]);
+          setShowTest(false);
+        }}
+      />
+    );
   }
 
   return (
@@ -15,7 +100,21 @@ function App() {
         <div className="brand">
           🚦 <span>K53 Visual Coach</span>
         </div>
+<button
+  className="nav-auth-btn"
+  onClick={() => {
+    if (user) {
+      setShowDashboard(true);
+      setShowAuth(false);
+      return;
+    }
 
+    setShowAuth(true);
+    setShowDashboard(false);
+  }}
+>
+  {user ? "My Account" : "Sign Up / Log In"}
+</button>
         <button
           className="navButton"
           onClick={() => setShowTest(true)}
