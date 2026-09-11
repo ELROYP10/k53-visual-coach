@@ -17,6 +17,8 @@ export default function Dashboard({
   const [mistakeProgress, setMistakeProgress] = useState([]);
   const [mistakeProgressLoading, setMistakeProgressLoading] = useState(true);
   const [mistakeProgressError, setMistakeProgressError] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
 
   useEffect(() => {
     const loadResults = async () => {
@@ -204,6 +206,19 @@ export default function Dashboard({
 
   const email = user?.email || "learner@k53coach.co.za";
 
+  const handleSignOut = async () => {
+    try {
+      setSigningOut(true);
+      setSignOutError("");
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      window.location.href = "/";
+    } catch (logoutError) {
+      setSignOutError(logoutError.message || "Unable to log out. Please try again.");
+      setSigningOut(false);
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -235,6 +250,10 @@ export default function Dashboard({
           letter-spacing: -0.04em;
           color: #f5fff9;
         }
+
+        .dashboard-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .logout-button { border: 1px solid rgba(248,113,113,.32); background: rgba(127,29,29,.18); color: #fecaca; border-radius: 12px; padding: 10px 16px; font-size: .85rem; font-weight: 800; cursor: pointer; }
+        .logout-button:disabled { cursor: wait; opacity: .6; }
 
         .dashboard-badge {
           background: rgba(36, 144, 105, 0.18);
@@ -699,7 +718,12 @@ export default function Dashboard({
         <div className="dashboard-shell">
           <header className="dashboard-header">
             <h1>K53 Visual Coach</h1>
-            <div className="dashboard-badge">Learner Dashboard</div>
+            <div className="dashboard-header-actions">
+              <div className="dashboard-badge">Learner Dashboard</div>
+              <button type="button" className="logout-button" onClick={handleSignOut} disabled={signingOut}>
+                {signingOut ? "Logging out..." : "Log Out"}
+              </button>
+            </div>
           </header>
 
           <div className="dashboard-grid">

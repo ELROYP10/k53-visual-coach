@@ -126,18 +126,82 @@ const buildPracticeQuestions = (mistakeTexts = []) => {
 };
 
 function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
-  const practiceQuestions = useMemo(() => buildPracticeQuestions(mistakeTexts), [mistakeTexts]);
+  const allPracticeQuestions = useMemo(() => buildPracticeQuestions(mistakeTexts), [mistakeTexts]);
+  const [masteredKeys, setMasteredKeys] = useState(new Set());
+  const [masteryLoading, setMasteryLoading] = useState(true);
+  const [masteryLoadError, setMasteryLoadError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
+  const [masterySaved, setMasterySaved] = useState(false);
   const saveAttemptedRef = useRef(false);
 
+  const practiceQuestions = useMemo(
+    () => allPracticeQuestions.filter((practiceQuestion) => !masteredKeys.has(practiceQuestion.id)),
+    [allPracticeQuestions, masteredKeys]
+  );
+
   useEffect(() => {
+    let active = true;
+
+    const loadMasteredQuestions = async () => {
+      setMasteryLoading(true);
+      setMasteryLoadError("");
+
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (!active) return;
+
+      if (sessionError) {
+        setMasteryLoadError(sessionError.message || "Unable to load smart practice progress.");
+        setMasteryLoading(false);
+        return;
+      }
+
+      const user = session?.user ?? null;
+      if (!user) {
+        setMasteryLoadError("Learner must be signed in to load smart practice progress.");
+        setMasteryLoading(false);
+        return;
+      }
+
+      const { data, error: queryError } = await supabase
+        .from("mistake_question_progress")
+        .select("question_key")
+        .eq("user_id", user.id)
+        .eq("mastered", true);
+
+      if (!active) return;
+
+      if (queryError) {
+        setMasteryLoadError(queryError.message || "Unable to load mastered questions.");
+        setMasteryLoading(false);
+        return;
+      }
+
+      setMasteredKeys(new Set((data || []).map((row) => row.question_key).filter(Boolean)));
+      setMasteryLoading(false);
+    };
+
+    loadMasteredQuestions();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (masteryLoading) return;
+
     setAnswers(Array(practiceQuestions.length).fill(null));
     setCurrent(0);
     setFinished(false);
+    setMasterySaved(false);
     saveAttemptedRef.current = false;
-  }, [practiceQuestions]);
+  }, [practiceQuestions, masteryLoading]);
 
   const totalQuestions = practiceQuestions.length;
   const question = practiceQuestions[current] || null;
@@ -205,11 +269,78 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
         return;
       }
 
+      // Smart Mistake Practice: only answered questions affect mastery.
+      // Two consecutive correct answers mark a question as mastered.
+      const answeredQuestions = practiceQuestions
+        .map((practiceQuestion, index) => ({ practiceQuestion, selectedAnswer: answers[index] }))
+        .filter(({ selectedAnswer }) => selectedAnswer !== null);
+
+      let masteryUpdateFailed = false;
+
+      for (const { practiceQuestion, selectedAnswer } of answeredQuestions) {
+        const answeredCorrectly = selectedAnswer === practiceQuestion.correct;
+        const { data: existingRows, error: existingError } = await supabase
+          .from("mistake_question_progress")
+          .select("attempts, correct_attempts, correct_streak, mastered")
+          .eq("user_id", user.id)
+          .eq("question_key", practiceQuestion.id)
+          .limit(1);
+
+        if (existingError) {
+          console.error("Unable to load question mastery:", existingError.message);
+          masteryUpdateFailed = true;
+          continue;
+        }
+
+        const existing = existingRows?.[0] ?? null;
+        const nextAttempts = Number(existing?.attempts ?? 0) + 1;
+        const nextCorrectAttempts = Number(existing?.correct_attempts ?? 0) + (answeredCorrectly ? 1 : 0);
+        const nextCorrectStreak = answeredCorrectly ? Number(existing?.correct_streak ?? 0) + 1 : 0;
+        const nextMastered = answeredCorrectly ? Boolean(existing?.mastered) || nextCorrectStreak >= 2 : false;
+        const progressRow = {
+          user_id: user.id, question_key: practiceQuestion.id, question_text: practiceQuestion.question,
+          section: practiceQuestion.section, attempts: nextAttempts, correct_attempts: nextCorrectAttempts,
+          correct_streak: nextCorrectStreak, mastered: nextMastered, last_answer_correct: answeredCorrectly,
+          last_practiced_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        };
+
+        const { error: progressError } = existing
+          ? await supabase.from("mistake_question_progress").update(progressRow).eq("user_id", user.id).eq("question_key", practiceQuestion.id)
+          : await supabase.from("mistake_question_progress").insert([progressRow]);
+
+        if (progressError) {
+          console.error("Unable to save question mastery:", progressError.message);
+          masteryUpdateFailed = true;
+        }
+      }
+
+      if (!masteryUpdateFailed) {
+        const newlyMasteredKeys = answeredQuestions
+          .filter(({ practiceQuestion, selectedAnswer }) => {
+            if (selectedAnswer !== practiceQuestion.correct) return false;
+            return true;
+          })
+          .map(({ practiceQuestion }) => practiceQuestion.id);
+
+        const { data: masteredRows, error: masteredRowsError } = await supabase
+          .from("mistake_question_progress")
+          .select("question_key")
+          .eq("user_id", user.id)
+          .eq("mastered", true);
+
+        if (masteredRowsError) {
+          console.error("Unable to refresh mastered questions:", masteredRowsError.message);
+        } else {
+          setMasteredKeys(new Set((masteredRows || []).map((row) => row.question_key).filter(Boolean)));
+        }
+
+        setMasterySaved(true);
+      }
       saveAttemptedRef.current = true;
     };
 
     saveMistakePracticeSession();
-  }, [finished, totalQuestions, score]);
+  }, [finished, totalQuestions, score, practiceQuestions, answers]);
 
   const chooseAnswer = (selectedIndex) => {
     setAnswers((previous) => {
@@ -236,6 +367,7 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
     setAnswers(Array(totalQuestions).fill(null));
     setCurrent(0);
     setFinished(false);
+    setMasterySaved(false);
     saveAttemptedRef.current = false;
   };
 
@@ -259,24 +391,60 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
     score: { fontSize: 54, fontWeight: 900, color: "#86efac" },
   };
 
+  if (masteryLoading) {
+    return (
+      <section style={resultStyles.page}>
+        <div style={resultStyles.resultCard}>
+          <p style={resultStyles.eyebrow}>SMART MISTAKE PRACTICE</p>
+          <h2 style={{ fontSize: 30, marginBottom: 8, color: "#f8fafc" }}>Loading your practice queue...</h2>
+          <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
+            Checking your mastered questions before practice begins.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (masteryLoadError) {
+    return (
+      <section style={resultStyles.page}>
+        <div style={resultStyles.resultCard}>
+          <p style={resultStyles.eyebrow}>SMART MISTAKE PRACTICE</p>
+          <h2 style={{ fontSize: 30, marginBottom: 8, color: "#f8fafc" }}>Unable to load smart practice</h2>
+          <p style={{ color: "#fecaca", lineHeight: 1.6 }}>{masteryLoadError}</p>
+          <button style={resultStyles.secondary} onClick={onExit}>Back to Dashboard</button>
+        </div>
+      </section>
+    );
+  }
+
   if (finished || totalQuestions === 0) {
     return (
       <section style={resultStyles.page}>
         <div style={resultStyles.resultCard}>
           <p style={resultStyles.eyebrow}>PRACTICE MY MISTAKES</p>
           <h2 style={{ fontSize: 34, marginBottom: 8, color: "#f8fafc" }}>
-            {totalQuestions === 0 ? "No matching mistakes found" : "Practice complete"}
+            {totalQuestions === 0
+              ? allPracticeQuestions.length > 0
+                ? "All current mistakes mastered"
+                : "No matching mistakes found"
+              : "Practice complete"}
           </h2>
 
           {totalQuestions === 0 ? (
             <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
-              There were no saved mistake questions available to match this K53 question bank.
+              {allPracticeQuestions.length > 0
+                ? "Great work. Every mistake in this practice set has reached the mastery target."
+                : "There were no saved mistake questions available to match this K53 question bank."}
             </p>
           ) : (
             <>
               <div style={resultStyles.score}>{score}/{totalQuestions}</div>
               <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
                 You answered {score} out of {totalQuestions} correctly in this focused mistake review.
+              </p>
+              <p style={{ color: "#86efac", fontWeight: 800 }}>
+                {masterySaved ? "Smart progress saved — 2 consecutive correct answers masters a question." : "Saving smart progress..."}
               </p>
             </>
           )}
