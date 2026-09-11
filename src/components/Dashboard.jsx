@@ -141,9 +141,17 @@ export default function Dashboard({
   const latestMistakeProgress = mistakeProgress[0] || null;
   const previousMistakeProgress = mistakeProgress[1] || null;
   const latestMistakePercentage = latestMistakeProgress?.percentage ?? null;
-  const latestMistakeCorrect = latestMistakeProgress?.correct_answers ?? null;
-  const latestMistakeTotal = latestMistakeProgress?.question_count ?? null;
+  const bestMistakePercentage =
+    mistakeProgress.length > 0
+      ? Math.max(...mistakeProgress.map((session) => Number(session.percentage ?? 0)))
+      : null;
   const previousMistakePercentage = previousMistakeProgress?.percentage ?? null;
+  const mistakeProgressStatus =
+    mistakeProgress.length <= 1
+      ? "First session"
+      : latestMistakeProgress?.improved
+        ? "Improved"
+        : "Not improved yet";
 
   const weakestArea = useMemo(() => {
     if (!latest) return "No completed tests yet";
@@ -827,32 +835,35 @@ export default function Dashboard({
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 12 }}>
-                    <div className="meta-box">
-                      <span className="meta-label">Latest score</span>
-                      <span className="meta-value">{latestMistakePercentage ?? 0}%</span>
+                    <div className="subject-grid" style={{ marginTop: 0 }}>
+                      <div className="subject-card">
+                        <div className="subject-title">
+                          <span>Last Score</span>
+                          <strong>{latestMistakePercentage ?? 0}%</strong>
+                        </div>
+                        <div className="subject-value">{latestMistakePercentage ?? 0}%</div>
+                      </div>
+
+                      <div className="subject-card">
+                        <div className="subject-title">
+                          <span>Best Score</span>
+                          <strong>{bestMistakePercentage ?? 0}%</strong>
+                        </div>
+                        <div className="subject-value">{bestMistakePercentage ?? 0}%</div>
+                      </div>
+
+                      <div className="subject-card">
+                        <div className="subject-title">
+                          <span>Sessions</span>
+                          <strong>{mistakeProgress.length}</strong>
+                        </div>
+                        <div className="subject-value">{mistakeProgress.length}</div>
+                      </div>
                     </div>
 
                     <div className="meta-box">
-                      <span className="meta-label">Correct answers</span>
-                      <span className="meta-value">
-                        {latestMistakeCorrect ?? 0} / {latestMistakeTotal ?? 0}
-                      </span>
-                    </div>
-
-                    <div className="meta-box">
-                      <span className="meta-label">Latest session improved</span>
-                      <span className="meta-value">
-                        {latestMistakeProgress?.improved === null || typeof latestMistakeProgress?.improved === "undefined"
-                          ? "First session"
-                          : latestMistakeProgress.improved
-                            ? "Yes"
-                            : "No"}
-                      </span>
-                    </div>
-
-                    <div className="meta-box">
-                      <span className="meta-label">Completed sessions</span>
-                      <span className="meta-value">{mistakeProgress.length}</span>
+                      <span className="meta-label">Progress status</span>
+                      <span className="meta-value">{mistakeProgressStatus}</span>
                     </div>
 
                     <div className="meta-box">
