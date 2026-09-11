@@ -14,6 +14,9 @@ export default function Dashboard({
   const [selectedResultDetails, setSelectedResultDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState("");
+  const [mistakeProgress, setMistakeProgress] = useState([]);
+  const [mistakeProgressLoading, setMistakeProgressLoading] = useState(true);
+  const [mistakeProgressError, setMistakeProgressError] = useState("");
 
   useEffect(() => {
     const loadResults = async () => {
@@ -47,6 +50,43 @@ export default function Dashboard({
     };
 
     loadResults();
+  }, [user?.id]);
+
+  useEffect(() => {
+    const loadMistakeProgress = async () => {
+      if (!user?.id) {
+        setMistakeProgress([]);
+        setMistakeProgressLoading(false);
+        setMistakeProgressError("");
+        return;
+      }
+
+      try {
+        setMistakeProgressLoading(true);
+        setMistakeProgressError("");
+
+        const { data, error: queryError } = await supabase
+          .from("mistake_practice_sessions")
+          .select("completed_at, question_count, correct_answers, percentage, improved")
+          .eq("user_id", user.id)
+          .order("completed_at", { ascending: false });
+
+        if (queryError) {
+          throw queryError;
+        }
+
+        setMistakeProgress(data || []);
+      } catch (loadError) {
+        setMistakeProgressError(
+          loadError.message || "Unable to load your mistake practice progress."
+        );
+        setMistakeProgress([]);
+      } finally {
+        setMistakeProgressLoading(false);
+      }
+    };
+
+    loadMistakeProgress();
   }, [user?.id]);
 
   useEffect(() => {
@@ -98,6 +138,12 @@ export default function Dashboard({
   const controls = latest ? Math.round((latest.controls_score / 8) * 100) : 0;
   const readiness = latest ? Math.round((latest.total_score / 64) * 100) : 0;
   const testsCompleted = results.length;
+  const latestMistakeProgress = mistakeProgress[0] || null;
+  const previousMistakeProgress = mistakeProgress[1] || null;
+  const latestMistakePercentage = latestMistakeProgress?.percentage ?? null;
+  const latestMistakeCorrect = latestMistakeProgress?.correct_answers ?? null;
+  const latestMistakeTotal = latestMistakeProgress?.question_count ?? null;
+  const previousMistakePercentage = previousMistakeProgress?.percentage ?? null;
 
   const weakestArea = useMemo(() => {
     if (!latest) return "No completed tests yet";
@@ -762,6 +808,63 @@ export default function Dashboard({
                     {loading ? "Loading..." : error ? "Unavailable" : latest ? weakestArea : "No tests yet"}
                   </strong>
                 </div>
+              </section>
+
+              <section className="panel history-card">
+                <p className="section-label">Mistake Practice Progress</p>
+
+                {mistakeProgressLoading ? (
+                  <div style={{ color: "#dfeee7", padding: "12px 0" }}>
+                    Loading your mistake practice progress…
+                  </div>
+                ) : mistakeProgressError ? (
+                  <div style={{ color: "#fecaca", padding: "12px 0" }}>
+                    {mistakeProgressError}
+                  </div>
+                ) : mistakeProgress.length === 0 ? (
+                  <div style={{ color: "#dfeee7", padding: "12px 0" }}>
+                    Complete a Practice My Mistakes session to start tracking progress.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <div className="meta-box">
+                      <span className="meta-label">Latest score</span>
+                      <span className="meta-value">{latestMistakePercentage ?? 0}%</span>
+                    </div>
+
+                    <div className="meta-box">
+                      <span className="meta-label">Correct answers</span>
+                      <span className="meta-value">
+                        {latestMistakeCorrect ?? 0} / {latestMistakeTotal ?? 0}
+                      </span>
+                    </div>
+
+                    <div className="meta-box">
+                      <span className="meta-label">Latest session improved</span>
+                      <span className="meta-value">
+                        {latestMistakeProgress?.improved === null || typeof latestMistakeProgress?.improved === "undefined"
+                          ? "First session"
+                          : latestMistakeProgress.improved
+                            ? "Yes"
+                            : "No"}
+                      </span>
+                    </div>
+
+                    <div className="meta-box">
+                      <span className="meta-label">Completed sessions</span>
+                      <span className="meta-value">{mistakeProgress.length}</span>
+                    </div>
+
+                    <div className="meta-box">
+                      <span className="meta-label">Previous score</span>
+                      <span className="meta-value">
+                        {mistakeProgress.length <= 1
+                          ? "First session"
+                          : `${previousMistakePercentage ?? 0}%`}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <section className="panel history-card">

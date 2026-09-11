@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 const QUESTION_BANK = [
   ["Rules of the Road", "When approaching a red traffic light, what must you do?", ["Stop before the stop line", "Slow down and continue if clear", "Sound the horn", "Stop only if pedestrians are present"], 0],
@@ -129,11 +130,13 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [finished, setFinished] = useState(false);
+  const saveAttemptedRef = useRef(false);
 
   useEffect(() => {
     setAnswers(Array(practiceQuestions.length).fill(null));
     setCurrent(0);
     setFinished(false);
+    saveAttemptedRef.current = false;
   }, [practiceQuestions]);
 
   const totalQuestions = practiceQuestions.length;
@@ -144,6 +147,69 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
     if (!currentQuestion) return total;
     return total + (answer === currentQuestion.correct ? 1 : 0);
   }, 0);
+
+  useEffect(() => {
+    if (!finished || totalQuestions === 0 || saveAttemptedRef.current) {
+      return;
+    }
+
+
+    const saveMistakePracticeSession = async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error("Unable to read current session:", sessionError.message);
+        return;
+      }
+
+      const user = session?.user ?? null;
+      if (!user) {
+        console.error("Learner must be signed in to save mistake-practice progress.");
+        return;
+      }
+
+      const percentage = Math.round((score / totalQuestions) * 100);
+
+      const { data: previousRows, error: previousError } = await supabase
+        .from("mistake_practice_sessions")
+        .select("percentage")
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false })
+        .limit(1);
+
+      if (previousError) {
+        console.error("Unable to load previous mistake-practice result:", previousError.message);
+        return;
+      }
+
+      const previousPercentage = previousRows && previousRows.length > 0 ? previousRows[0].percentage : null;
+      const improved = previousPercentage === null ? false : percentage > previousPercentage;
+
+      const { error: insertError } = await supabase
+        .from("mistake_practice_sessions")
+        .insert([
+          {
+            user_id: user.id,
+            question_count: totalQuestions,
+            correct_answers: score,
+            percentage,
+            improved,
+          },
+        ]);
+
+      if (insertError) {
+        console.error("Unable to save mistake-practice session:", insertError.message);
+        return;
+      }
+
+      saveAttemptedRef.current = true;
+    };
+
+    saveMistakePracticeSession();
+  }, [finished, totalQuestions, score]);
 
   const chooseAnswer = (selectedIndex) => {
     setAnswers((previous) => {
@@ -170,6 +236,7 @@ function MistakePractice({ mistakeTexts = [], onExit = () => {} }) {
     setAnswers(Array(totalQuestions).fill(null));
     setCurrent(0);
     setFinished(false);
+    saveAttemptedRef.current = false;
   };
 
   const resultStyles = {
