@@ -131,18 +131,67 @@ function getMistakePracticeDuration(questionCount) {
 function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
   const normalizedFocus = focusCategory ? focusCategory.trim() : null;
   const normalizedMistakes = Array.isArray(focusMistakes) ? focusMistakes.filter(Boolean) : [];
+  const mistakeKey = normalizedMistakes.map((value) => String(value).trim()).join("||");
   const isMistakePractice = normalizedMistakes.length > 0;
 
+  const [questionBank, setQuestionBank] = useState([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [questionsError, setQuestionsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadQuestions = async () => {
+      setQuestionsLoading(true);
+      setQuestionsError("");
+
+      const { data, error } = await supabase
+        .from("k53_questions")
+        .select("question_code,section,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,visual_asset_id,visual_type,status")
+        .order("question_code", { ascending: true });
+
+      if (!active) return;
+
+      if (error) {
+        setQuestionsError(error.message || "Unable to load the K53 question bank.");
+        setQuestionsLoading(false);
+        return;
+      }
+
+      const converted = (data || []).map((row) => {
+        const sourceOptions = [row.option_a, row.option_b, row.option_c, row.option_d];
+        const correctIndex = Math.max(0, "ABCD".indexOf(row.correct_option));
+        const correctText = sourceOptions[correctIndex];
+        const shuffledOptions = shuffle(sourceOptions);
+
+        return {
+          id: row.question_code,
+          section: row.section,
+          question: row.question_text,
+          options: shuffledOptions,
+          correct: shuffledOptions.indexOf(correctText),
+          explanation: row.explanation || "",
+          sign: null,
+          scenario: null,
+          visualAssetId: row.visual_asset_id || null,
+          visualType: row.visual_type || null,
+        };
+      });
+
+      setQuestionBank(converted);
+      setQuestionsLoading(false);
+    };
+
+    loadQuestions();
+    return () => { active = false; };
+  }, []);
+
   const questions = useMemo(() => {
-    const allQuestions = prepareQuestions();
+    if (!questionBank.length) return [];
 
     if (normalizedMistakes.length > 0) {
       const mistakeSet = new Set(normalizedMistakes.map((value) => String(value).trim()));
-      return allQuestions.filter((question) => mistakeSet.has(question.question.trim()));
-    }
-
-    if (!normalizedFocus) {
-      return allQuestions;
+      return shuffle(questionBank.filter((question) => mistakeSet.has(question.question.trim())));
     }
 
     const categoryMap = {
@@ -151,10 +200,26 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
       "Vehicle Controls": C,
     };
 
-    const matchedSection = categoryMap[normalizedFocus] || normalizedFocus;
+    const pick = (section, count) =>
+      shuffle(questionBank.filter((question) => question.section === section)).slice(0, count);
 
-    return allQuestions.filter((question) => question.section === matchedSection);
-  }, [normalizedFocus, normalizedMistakes]);
+    if (normalizedFocus) {
+      const matchedSection = categoryMap[normalizedFocus] || normalizedFocus;
+      const sectionQuestionCount = {
+        [R]: 28,
+        [S]: 28,
+        [C]: 8,
+      };
+
+      return pick(matchedSection, sectionQuestionCount[matchedSection] || 28);
+    }
+
+    return shuffle([
+      ...pick(R, 28),
+      ...pick(S, 28),
+      ...pick(C, 8),
+    ]);
+  }, [questionBank, normalizedFocus, mistakeKey]);
 
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null));
@@ -166,6 +231,15 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
   const [submitted, setSubmitted] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    setCurrent(0);
+    setAnswers(Array(questions.length).fill(null));
+    setFlags(Array(questions.length).fill(false));
+    setSecondsLeft(isMistakePractice ? getMistakePracticeDuration(questions.length) : 3600);
+    setSubmitted(false);
+    setShowReview(false);
+  }, [questions, isMistakePractice]);
 
   const saveCurrentResult = async () => {
     const {
@@ -252,7 +326,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
   };
 
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || questionsLoading || questions.length === 0) return;
     const timer = window.setInterval(() => {
       setSecondsLeft((value) => {
         if (value <= 1) {
@@ -264,7 +338,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [submitted]);
+  }, [submitted, questionsLoading, questions.length]);
 
   const totalQuestions = questions.length;
   const question = questions[current];
@@ -347,6 +421,29 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
   };
 
   const restartTest = () => window.location.reload();
+
+  if (questionsLoading) {
+    return (
+      <section style={{ minHeight: "100vh", background: "#08111f", color: "#f8fafc", display: "grid", placeItems: "center", padding: 24 }}>
+        <div style={{ textAlign: "center" }}>
+          <h2>Loading K53 question bank…</h2>
+          <p style={{ color: "#94a3b8" }}>Connecting to the live Supabase database.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (questionsError || questions.length === 0) {
+    return (
+      <section style={{ minHeight: "100vh", background: "#08111f", color: "#f8fafc", display: "grid", placeItems: "center", padding: 24 }}>
+        <div style={{ maxWidth: 620, textAlign: "center" }}>
+          <h2>Question bank unavailable</h2>
+          <p style={{ color: "#fca5a5" }}>{questionsError || "No matching questions were found."}</p>
+          <button onClick={onExit} style={{ border: 0, background: "#22c55e", color: "#052e16", borderRadius: 11, padding: "11px 18px", fontWeight: 900, cursor: "pointer" }}>Back to Home</button>
+        </div>
+      </section>
+    );
+  }
 
   const visual = question.sign
     ? signSVG[question.sign]
