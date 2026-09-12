@@ -86,9 +86,183 @@ export default function Auth({ onClose }) {
     }
   };
 
+
+  const oneScreenStyles = (
+    <style>{`
+      .auth-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        box-sizing: border-box;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(41, 199, 126, .12), transparent 34%),
+          linear-gradient(135deg, rgba(3, 18, 25, .98), rgba(5, 42, 31, .98));
+        font-family: Inter, "Segoe UI", sans-serif;
+      }
+
+      .auth-card {
+        position: relative;
+        width: min(460px, calc(100vw - 36px));
+        max-height: calc(100vh - 36px);
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 28px 30px 24px;
+        border: 1px solid rgba(110, 231, 183, .24);
+        border-radius: 22px;
+        background: rgba(7, 28, 28, .94);
+        box-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+        color: #f4fff9;
+      }
+
+      .auth-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #22c55e, #6ee7b7);
+      }
+
+      .auth-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 216, 185, .2);
+        background: rgba(255,255,255,.04);
+        color: #dff7eb;
+        font-size: 1.3rem;
+        cursor: pointer;
+      }
+
+      .auth-card .eyebrow {
+        margin: 0 44px 8px 0;
+        color: #6ee7b7;
+        font-size: .7rem;
+        font-weight: 800;
+        letter-spacing: .13em;
+      }
+
+      .auth-card h2 {
+        margin: 0 0 8px;
+        font-size: clamp(1.8rem, 4vw, 2.35rem);
+        letter-spacing: -.04em;
+        color: #f8fffb;
+      }
+
+      .auth-subtitle {
+        margin: 0 0 18px;
+        color: #b9d9cd;
+        line-height: 1.45;
+        font-size: .92rem;
+      }
+
+      .auth-email {
+        margin: 0 0 20px;
+        padding: 12px 14px;
+        border: 1px solid rgba(110, 231, 183, .18);
+        border-radius: 12px;
+        background: rgba(255,255,255,.035);
+        color: #eafff4;
+        word-break: break-word;
+      }
+
+      .auth-form {
+        display: grid;
+        gap: 13px;
+      }
+
+      .auth-form label {
+        display: grid;
+        gap: 6px;
+        color: #d8eee5;
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .03em;
+      }
+
+      .auth-form input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid rgba(148, 216, 185, .24);
+        border-radius: 12px;
+        padding: 12px 13px;
+        background: rgba(2, 15, 23, .58);
+        color: #f4fff9;
+        outline: none;
+        font: inherit;
+      }
+
+      .auth-form input:focus {
+        border-color: #6ee7b7;
+        box-shadow: 0 0 0 3px rgba(110, 231, 183, .09);
+      }
+
+      .auth-card .primary-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-top: 2px;
+        background: linear-gradient(135deg, #32c98b, #18885e);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 12px 24px rgba(34, 197, 94, .16);
+      }
+
+      .auth-card .primary-btn:disabled,
+      .auth-switch:disabled {
+        opacity: .6;
+        cursor: wait;
+      }
+
+      .auth-switch {
+        width: 100%;
+        margin-top: 12px;
+        border: 0;
+        background: transparent;
+        color: #8ee8bd;
+        font-weight: 750;
+        cursor: pointer;
+        padding: 7px;
+      }
+
+      .auth-message {
+        margin-top: 12px;
+        padding: 9px 11px;
+        border-radius: 10px;
+        border: 1px solid rgba(110, 231, 183, .18);
+        background: rgba(110, 231, 183, .07);
+        color: #dff7eb;
+        font-size: .8rem;
+        line-height: 1.35;
+      }
+
+      @media (max-height: 600px) and (min-width: 600px) {
+        .auth-card { padding: 20px 24px 18px; }
+        .auth-card h2 { font-size: 1.65rem; }
+        .auth-subtitle { margin-bottom: 11px; }
+        .auth-form { gap: 9px; }
+        .auth-form input { padding: 9px 11px; }
+        .auth-card .primary-btn { padding: 10px 14px; }
+        .auth-switch { margin-top: 7px; padding: 5px; }
+      }
+    `}</style>
+  );
+
   if (user) {
     return (
-      <div className="auth-overlay">
+      <>
+        {oneScreenStyles}
+        <div className="auth-overlay">
         <div className="auth-card">
           <button className="auth-close" onClick={onClose}>
             ×
@@ -115,11 +289,14 @@ export default function Auth({ onClose }) {
           {message && <div className="auth-message">{message}</div>}
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="auth-overlay">
+    <>
+      {oneScreenStyles}
+      <div className="auth-overlay">
       <div className="auth-card">
         <button className="auth-close" onClick={onClose}>
           ×
@@ -184,5 +361,6 @@ export default function Auth({ onClose }) {
         </button>
       </div>
     </div>
+    </>
   );
 }
