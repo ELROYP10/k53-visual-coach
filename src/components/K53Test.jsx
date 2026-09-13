@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import K53Visual from "../assets/k53-visuals/K53Visuals";
 
 const signSVG={
 stop:`<div class="sign-wrap"><svg viewBox="0 0 120 120"><polygon points="35,5 85,5 115,35 115,85 85,115 35,115 5,85 5,35" fill="#c62828" stroke="#fff" stroke-width="5"/><text x="60" y="70" text-anchor="middle" fill="white" font-size="27" font-weight="700">STOP</text></svg></div>`,
@@ -452,32 +453,41 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
       : "";
 
   const styles = {
-    page: { minHeight: "100vh", background: "#08111f", color: "#f8fafc", padding: "24px 5% 50px" },
-    shell: { maxWidth: 980, margin: "0 auto" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 16 },
+    page: { height: "100vh", background: "#08111f", color: "#f8fafc", padding: "18px 5%", overflow: "hidden", boxSizing: "border-box", display: "grid", placeItems: "center" },
+    shell: { width: "100%", maxWidth: 1100, height: "100%", margin: "0 auto", minHeight: 0, display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 12 },
+    testPage: { height: "100vh", background: "#08111f", color: "#f8fafc", padding: "12px 18px", overflow: "hidden", boxSizing: "border-box" },
+    testShell: { width: "100%", maxWidth: 1360, height: "100%", margin: "0 auto", display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr) auto", gap: 10 },
+    testCard: { minHeight: 0, background: "#111827", border: "1px solid #334155", borderRadius: 18, padding: 18, display: "grid", gridTemplateColumns: "minmax(0, 1.08fr) minmax(360px, .92fr)", gap: 20, overflow: "hidden" },
+    questionPane: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
+    answerPane: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center" },
+    compactMeta: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 },
+    visualStage: { flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 14, background: "#0b1424", border: "1px solid #263449", padding: 10 },
+    footerNav: { display: "grid", gridTemplateColumns: "repeat(16, 30px)", gap: 4, justifyContent: "center", alignContent: "center" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "nowrap", marginBottom: 0 },
     eyebrow: { margin: 0, color: "#86efac", fontSize: 12, fontWeight: 800, letterSpacing: ".1em" },
-    heading: { margin: "6px 0 0", fontSize: 24 },
+    heading: { margin: "2px 0 0", fontSize: 22 },
     timerRow: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" },
     exit: { border: "1px solid #475569", background: "#111827", color: "white", borderRadius: 11, padding: "11px 16px", fontWeight: 800, cursor: "pointer" },
-    progressTrack: { height: 8, background: "#1e293b", borderRadius: 999, overflow: "hidden", marginBottom: 18 },
+    progressTrack: { height: 7, background: "#1e293b", borderRadius: 999, overflow: "hidden", marginBottom: 0 },
     progressFill: { height: "100%", background: "#22c55e", width: `${((current + 1) / totalQuestions) * 100}%` },
-    answered: { color: "#94a3b8", marginBottom: 14 },
+    answered: { color: "#94a3b8", marginBottom: 0, fontSize: 13 },
     card: { background: "#111827", border: "1px solid #334155", borderRadius: 18, padding: 24 },
     badge: { display: "inline-block", color: "#86efac", background: "#052e16", borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 800 },
-    question: { fontSize: 21, lineHeight: 1.4, margin: "16px 0 18px" },
-    visualBox: { display: "flex", justifyContent: "center", alignItems: "center", margin: "8px 0 18px", maxHeight: 180, overflow: "hidden" },
-    answers: { display: "grid", gap: 10 },
-    answer: { width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "2px solid #334155", borderRadius: 12, background: "#1f2937", color: "white", textAlign: "left", fontSize: 15, cursor: "pointer" },
+    question: { fontSize: 22, lineHeight: 1.3, margin: "10px 0 12px" },
+    visualBox: { width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" },
+    answers: { display: "grid", gap: 10, width: "100%" },
+    answer: { width: "100%", minHeight: 54, display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "2px solid #334155", borderRadius: 12, background: "#1f2937", color: "white", textAlign: "left", fontSize: 15, cursor: "pointer" },
     answerSelected: { borderColor: "#22c55e", background: "#0d2818" },
     letter: { width: 32, height: 32, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 8, background: "#0f172a", fontWeight: 900 },
-    actions: { display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 },
+    actions: { display: "flex", gap: 8, flexWrap: "nowrap", marginTop: 14 },
     secondary: { border: "1px solid #475569", background: "#111827", color: "white", borderRadius: 11, padding: "11px 16px", fontWeight: 800, cursor: "pointer" },
     primary: { border: 0, background: "#22c55e", color: "#052e16", borderRadius: 11, padding: "11px 18px", fontWeight: 900, cursor: "pointer" },
-    navigator: { display: "grid", gridTemplateColumns: "repeat(8, 42px)", gap: 6, marginTop: 18, width: "fit-content", maxWidth: "100%" },
-    navButton: { width: 42, height: 42, minWidth: 42, minHeight: 42, padding: 0, borderRadius: 8, color: "white", fontWeight: 800, cursor: "pointer" },
-    resultCard: { maxWidth: 820, margin: "50px auto", background: "#111827", border: "1px solid #334155", borderRadius: 20, padding: 28, textAlign: "center" },
-    sections: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: 12, marginTop: 22 },
-    sectionCard: { border: "1px solid #334155", borderRadius: 14, padding: 16, background: "#0f172a", textAlign: "left" },
+    navigator: { display: "grid", gridTemplateColumns: "repeat(16, 30px)", gap: 4, justifyContent: "center", width: "100%" },
+    navButton: { width: 30, height: 26, minWidth: 30, minHeight: 26, padding: 0, borderRadius: 6, color: "white", fontSize: 11, fontWeight: 800, cursor: "pointer" },
+    resultCard: { width: "min(820px, 100%)", maxHeight: "calc(100vh - 36px)", margin: 0, background: "#111827", border: "1px solid #334155", borderRadius: 20, padding: "22px 28px", textAlign: "center", boxSizing: "border-box", overflow: "hidden" },
+    sections: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: 12, marginTop: 16 },
+    sectionCard: { border: "1px solid #334155", borderRadius: 14, padding: 14, background: "#0f172a", textAlign: "left" },
+    reviewList: { minHeight: 0, overflowY: "auto", display: "grid", gap: 12, paddingRight: 6, alignContent: "start" },
   };
 
   if (submitted && showReview) {
@@ -496,7 +506,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
             <button style={styles.secondary} onClick={() => setShowReview(false)}>Back to Results</button>
           </div>
 
-          <div style={{ display: "grid", gap: 14 }}>
+          <div style={styles.reviewList}>
             {mistakes.length === 0 ? (
               <div style={styles.card}><h3>No mistakes to review.</h3></div>
             ) : mistakes.map(({ item, index, selected }) => (
@@ -519,10 +529,10 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
       <section style={styles.page}>
         <div style={styles.resultCard}>
           <p style={styles.eyebrow}>{isMistakePractice ? "PRACTICE MY MISTAKES" : "COMPLETE K53 PRACTICE RESULT"}</p>
-          <h2 style={{ fontSize: 34, marginBottom: 8, color: passed ? "#86efac" : "#fca5a5" }}>
+          <h2 style={{ fontSize: 32, margin: "10px 0 6px", color: passed ? "#86efac" : "#fca5a5" }}>
             {isMistakePractice ? "PRACTICE COMPLETE" : passed ? "PASS" : "NOT YET"}
           </h2>
-          <div style={{ fontSize: 54, fontWeight: 900, color: "#86efac" }}>{totalScore}/{totalQuestions}</div>
+          <div style={{ fontSize: 50, lineHeight: 1, fontWeight: 900, color: "#86efac" }}>{totalScore}/{totalQuestions}</div>
           <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
             {isMistakePractice
               ? `You completed ${totalScore}/${totalQuestions} in this focused mistake-practice set.`
@@ -551,7 +561,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
             ))}
           </div>
 
-          <div style={{ ...styles.actions, justifyContent: "center", marginTop: 24 }}>
+          <div style={{ ...styles.actions, justifyContent: "center", marginTop: 18 }}>
             <button style={styles.primary} onClick={() => setShowReview(true)}>Review Mistakes</button>
             <button style={styles.secondary} onClick={restartTest}>New Test</button>
             <button style={styles.secondary} onClick={onExit}>Back to Home</button>
@@ -562,8 +572,8 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
   }
 
   return (
-    <section style={styles.page}>
-      <div style={styles.shell}>
+    <section style={styles.testPage}>
+      <div style={styles.testShell}>
         <div style={styles.header}>
           <div>
             <p style={styles.eyebrow}>
@@ -576,56 +586,74 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
             <h2 style={styles.heading}>Question {current + 1} of {totalQuestions}</h2>
           </div>
           <div style={styles.timerRow}>
+            <span style={styles.answered}>Answered {answeredCount}/{totalQuestions}</span>
             <strong style={{ color: secondsLeft <= 300 ? "#fca5a5" : "#86efac" }}>⏱ {formatTime(secondsLeft)}</strong>
             <button style={styles.exit} onClick={onExit}>Exit Test</button>
           </div>
         </div>
 
         <div style={styles.progressTrack}><div style={styles.progressFill} /></div>
-        <div style={styles.answered}>Answered {answeredCount}/{totalQuestions}</div>
 
-        <div style={styles.card}>
-          <span style={styles.badge}>{question.section}</span>
-          <h3 style={styles.question}>{question.question}</h3>
+        <div style={styles.testCard}>
+          <div style={styles.questionPane}>
+            <div style={styles.compactMeta}>
+              <span style={styles.badge}>{question.section}</span>
+              <span style={{ color: "#94a3b8", fontSize: 12 }}>{question.id}</span>
+            </div>
 
-          {visual && (
-            <div
-              style={styles.visualBox}
-              dangerouslySetInnerHTML={{ __html: visual }}
-            />
-          )}
+            <h3 style={styles.question}>{question.question}</h3>
 
-          <div style={styles.answers}>
-            {question.options.map((option, index) => (
-              <button
-                key={`${question.id}-${index}`}
-                style={{ ...styles.answer, ...(answers[current] === index ? styles.answerSelected : {}) }}
-                onClick={() => chooseAnswer(index)}
-              >
-                <span style={styles.letter}>{String.fromCharCode(65 + index)}</span>
-                <span>{option}</span>
-              </button>
-            ))}
+            <div style={styles.visualStage}>
+              {visual ? (
+                <div
+                  style={styles.visualBox}
+                  dangerouslySetInnerHTML={{ __html: visual }}
+                />
+              ) : (
+                <K53Visual
+                  visualAssetId={question.visualAssetId}
+                  visualType={question.visualType}
+                  questionText={question.question}
+                />
+              )}
+            </div>
           </div>
 
-          <div style={styles.actions}>
-            <button
-              style={{ ...styles.secondary, opacity: current === 0 ? 0.45 : 1 }}
-              disabled={current === 0}
-              onClick={() => setCurrent(current - 1)}
-            >
-              Previous
-            </button>
-            <button style={styles.secondary} onClick={toggleFlag}>{flags[current] ? "⚑ Flagged" : "⚑ Flag"}</button>
-            {current === questions.length - 1 ? (
-              <button style={styles.primary} onClick={submitTest}>Submit Test</button>
-            ) : (
-              <button style={styles.primary} onClick={() => setCurrent(current + 1)}>Next Question</button>
-            )}
+          <div style={styles.answerPane}>
+            <div style={styles.answers}>
+              {question.options.map((option, index) => (
+                <button
+                  key={`${question.id}-${index}`}
+                  style={{ ...styles.answer, ...(answers[current] === index ? styles.answerSelected : {}) }}
+                  onClick={() => chooseAnswer(index)}
+                >
+                  <span style={styles.letter}>{String.fromCharCode(65 + index)}</span>
+                  <span>{option}</span>
+                </button>
+              ))}
+            </div>
+
+            <div style={styles.actions}>
+              <button
+                style={{ ...styles.secondary, flex: 1, opacity: current === 0 ? 0.45 : 1 }}
+                disabled={current === 0}
+                onClick={() => setCurrent(current - 1)}
+              >
+                Previous
+              </button>
+              <button style={{ ...styles.secondary, flex: 1 }} onClick={toggleFlag}>
+                {flags[current] ? "⚑ Flagged" : "⚑ Flag"}
+              </button>
+              {current === questions.length - 1 ? (
+                <button style={{ ...styles.primary, flex: 1 }} onClick={submitTest}>Submit</button>
+              ) : (
+                <button style={{ ...styles.primary, flex: 1 }} onClick={() => setCurrent(current + 1)}>Next</button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div style={styles.navigator}>
+        <div style={styles.footerNav}>
           {questions.map((item, index) => (
             <button
               key={item.id}
@@ -640,10 +668,6 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
               {index + 1}
             </button>
           ))}
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
-          <button style={styles.primary} onClick={submitTest}>Submit Test</button>
         </div>
       </div>
     </section>
