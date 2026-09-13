@@ -743,8 +743,78 @@ export default function Dashboard({
           .content-column > .history-card:nth-of-type(3) .subject-card { padding:8px; }
           .content-column > .history-card:nth-of-type(3) .subject-value { font-size:1.05rem; }
           .content-column > .history-card:nth-of-type(3) .meta-box { padding:7px 9px; }
-          .history-detail-overlay { padding:10px; }
-          .history-detail-panel { max-height:94vh; }
+          .history-detail-overlay {
+            padding:12px;
+            align-items:center;
+            justify-items:center;
+          }
+          .history-detail-panel {
+            width:min(1040px, calc(100vw - 28px));
+            height:min(620px, calc(100vh - 28px));
+            max-height:none;
+            padding:16px 18px;
+            display:grid;
+            grid-template-columns:310px minmax(0,1fr);
+            grid-template-rows:auto minmax(0,1fr);
+            gap:12px 18px;
+          }
+          .history-detail-header {
+            grid-column:1 / -1;
+            position:static;
+            margin:0;
+            padding:0 0 8px;
+            border-bottom:1px solid rgba(143,216,185,.14);
+          }
+          .history-detail-grid {
+            grid-column:1;
+            grid-row:2;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            align-content:start;
+            gap:8px;
+          }
+          .history-detail-item { padding:9px 10px; }
+          .history-detail-label { margin-bottom:3px; font-size:.61rem; }
+          .history-detail-value { font-size:.94rem; }
+          .history-detail-body {
+            grid-column:2;
+            grid-row:2;
+            min-height:0;
+            overflow:hidden;
+            padding:0;
+            display:grid;
+            grid-template-rows:auto auto minmax(0,1fr);
+          }
+          .history-detail-actions {
+            margin:0 0 8px;
+            justify-content:flex-end;
+          }
+          .history-detail-practice { padding:9px 13px; font-size:.82rem; }
+          .history-detail-list {
+            min-height:0;
+            overflow-y:auto;
+            margin-top:0;
+            padding-right:6px;
+            gap:8px;
+          }
+          .history-detail-mistake {
+            padding:10px;
+            gap:7px;
+          }
+          .history-detail-mistake h4 {
+            font-size:.88rem;
+            line-height:1.25;
+          }
+          .history-detail-mistake .mistake-field {
+            padding:7px 9px;
+          }
+          .history-detail-mistake .mistake-field-label {
+            margin-bottom:3px;
+            font-size:.59rem;
+          }
+          .history-detail-mistake .mistake-field-value {
+            font-size:.78rem;
+            line-height:1.3;
+          }
         }
 
         @media (max-width: 860px) {
