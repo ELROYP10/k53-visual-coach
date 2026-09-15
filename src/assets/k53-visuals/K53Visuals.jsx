@@ -33,12 +33,28 @@ function StopSign() {
   );
 }
 
+function StopLineScene() {
+  return (
+    <SvgFrame label="STOP sign with stop line">
+      <rect width="640" height="320" fill="#86b86b" />
+      <rect x="145" width="350" height="320" fill="#4b5563" />
+      <line x1="320" y1="0" x2="320" y2="170" stroke="#fff" strokeWidth="6" strokeDasharray="26 18" />
+      <line x1="165" y1="205" x2="475" y2="205" stroke="#fff" strokeWidth="18" />
+      <text x="320" y="188" textAnchor="middle" fill="#fff" fontSize="30" fontWeight="900">STOP LINE</text>
+      <rect x="468" y="100" width="8" height="120" fill="#475569" />
+      <polygon points="440,42 500,42 540,82 540,142 500,182 440,182 400,142 400,82" fill="#c62828" stroke="#fff" strokeWidth="7" />
+      <text x="470" y="126" textAnchor="middle" fill="#fff" fontSize="32" fontWeight="900">STOP</text>
+      <rect x="292" y="230" width="56" height="76" rx="9" fill="#2563eb" />
+    </SvgFrame>
+  );
+}
+
 function YieldSign() {
   return (
     <SvgFrame label="YIELD sign">
       
       <rect x="283" y="190" width="10" height="130" fill="#475569" />
-      <polygon points="288,45 390,210 186,210" fill="white" stroke="#c62828" strokeWidth="14" />
+      <polygon points="186,55 390,55 288,220" fill="white" stroke="#c62828" strokeWidth="14" />
     </SvgFrame>
   );
 }
@@ -123,6 +139,150 @@ function KeepLeftSign() {
       <circle cx="288" cy="125" r="92" fill="#2563eb" stroke="#fff" strokeWidth="8" />
       <path d="M330 70 L245 155 M245 155 L245 112 M245 155 L288 155"
         stroke="#fff" strokeWidth="18" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </SvgFrame>
+  );
+}
+
+
+function RegulatoryCircle({ label, children, background = "#2563eb", border = "#fff" }) {
+  return (
+    <SvgFrame label={label}>
+      <rect x="283" y="190" width="10" height="130" fill="#475569" />
+      <circle cx="288" cy="125" r="92" fill={background} stroke={border} strokeWidth="8" />
+      {children}
+    </SvgFrame>
+  );
+}
+
+function ArrowCommandSign({ direction = "left", label = "Regulatory command sign" }) {
+  const paths = {
+    left: "M340 125 H235 M235 125 L278 82 M235 125 L278 168",
+    right: "M236 125 H341 M341 125 L298 82 M341 125 L298 168",
+    straight: "M288 180 V72 M288 72 L247 113 M288 72 L329 113",
+    downLeft: "M337 76 L240 173 M240 173 V125 M240 173 H288",
+    downRight: "M239 76 L336 173 M336 173 V125 M336 173 H288",
+    turnLeft: "M337 170 V119 Q337 82 300 82 H238 M238 82 L278 45 M238 82 L278 119",
+    turnRight: "M239 170 V119 Q239 82 276 82 H338 M338 82 L298 45 M338 82 L298 119",
+  };
+  return (
+    <RegulatoryCircle label={label}>
+      <path d={paths[direction]} stroke="#fff" strokeWidth="18" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </RegulatoryCircle>
+  );
+}
+
+function YieldPedestriansSign() {
+  return (
+    <SvgFrame label="Yield to pedestrians sign">
+      <rect x="283" y="190" width="10" height="130" fill="#475569" />
+      <polygon points="186,55 390,55 288,220" fill="white" stroke="#c62828" strokeWidth="14" />
+      <circle cx="288" cy="102" r="10" fill="#111827" />
+      <path d="M288 115 L286 151 M286 126 L261 142 M286 126 L313 142 M286 151 L265 180 M286 151 L310 180"
+        stroke="#111827" strokeWidth="8" fill="none" strokeLinecap="round" />
+    </SvgFrame>
+  );
+}
+
+function MiniCircleSign() {
+  return (
+    <SvgFrame label="Yield at mini-circle sign">
+      <rect x="283" y="190" width="10" height="130" fill="#475569" />
+      <polygon points="186,55 390,55 288,220" fill="white" stroke="#c62828" strokeWidth="14" />
+      <circle cx="288" cy="135" r="35" fill="none" stroke="#111827" strokeWidth="9" strokeDasharray="42 16" />
+      <polygon points="315,103 337,109 321,126" fill="#111827" />
+    </SvgFrame>
+  );
+}
+
+function OneWaySign() {
+  return (
+    <SvgFrame label="One-way roadway sign">
+      <rect x="314" y="190" width="12" height="130" fill="#475569" />
+      <rect x="150" y="62" width="340" height="126" rx="10" fill="#2563eb" stroke="#fff" strokeWidth="8" />
+      <path d="M205 125 H430 M430 125 L385 82 M430 125 L385 168"
+        stroke="#fff" strokeWidth="18" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </SvgFrame>
+  );
+}
+
+function PedestriansOnlySign() {
+  return (
+    <RegulatoryCircle label="Pedestrians only sign">
+      <circle cx="288" cy="86" r="13" fill="#fff" />
+      <path d="M288 103 L286 148 M286 118 L254 139 M286 118 L319 139 M286 148 L260 183 M286 148 L316 183"
+        stroke="#fff" strokeWidth="11" fill="none" strokeLinecap="round" />
+    </RegulatoryCircle>
+  );
+}
+
+function CyclesOnlySign() {
+  return (
+    <RegulatoryCircle label="Pedal cycles only sign">
+      <circle cx="253" cy="153" r="29" fill="none" stroke="#fff" strokeWidth="8" />
+      <circle cx="326" cy="153" r="29" fill="none" stroke="#fff" strokeWidth="8" />
+      <path d="M253 153 L277 111 L301 153 L253 153 M277 111 H309 L326 153 M267 100 H287"
+        stroke="#fff" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </RegulatoryCircle>
+  );
+}
+
+function MotorcycleOnlySign() {
+  return (
+    <RegulatoryCircle label="Motorcycles only sign">
+      <circle cx="244" cy="162" r="25" fill="none" stroke="#fff" strokeWidth="9" />
+      <circle cx="334" cy="162" r="25" fill="none" stroke="#fff" strokeWidth="9" />
+      <path d="M244 162 L270 136 L302 136 L320 162 H334 M270 136 L284 162 M302 136 L316 110 H338" stroke="#fff" strokeWidth="9" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M270 136 Q286 108 311 116 L324 136 H291 Z" fill="#fff" />
+      <path d="M316 110 L330 98 H345" stroke="#fff" strokeWidth="8" fill="none" strokeLinecap="round" />
+      <circle cx="286" cy="104" r="11" fill="#fff" />
+    </RegulatoryCircle>
+  );
+}
+
+function MotorCarsOnlySign() {
+  return (
+    <RegulatoryCircle label="Motor cars only sign">
+      <path d="M225 145 L241 105 Q246 94 260 94 H316 Q330 94 335 105 L351 145 V174 H225 Z"
+        fill="#fff" />
+      <rect x="237" y="120" width="102" height="30" rx="7" fill="#2563eb" />
+      <circle cx="248" cy="174" r="12" fill="#fff" />
+      <circle cx="328" cy="174" r="12" fill="#fff" />
+    </RegulatoryCircle>
+  );
+}
+
+function ProhibitionExampleSign() {
+  return (
+    <RegulatoryCircle label="Regulatory prohibition sign" background="#fff" border="#dc2626">
+      <path d="M235 178 L341 72" stroke="#dc2626" strokeWidth="18" strokeLinecap="round" />
+      <path d="M288 78 V172" stroke="#111827" strokeWidth="14" strokeLinecap="round" />
+    </RegulatoryCircle>
+  );
+}
+
+function TemporaryRegulatorySign({ variant = "command" }) {
+  return (
+    <SvgFrame label="Temporary regulatory sign">
+      <rect x="283" y="205" width="10" height="115" fill="#475569" />
+      <rect x="154" y="34" width="268" height="190" rx="16" fill="#f59e0b" stroke="#111827" strokeWidth="7" />
+      <circle cx="288" cy="129" r="72" fill={variant === "prohibition" ? "#fff" : "#2563eb"}
+        stroke={variant === "prohibition" ? "#dc2626" : "#fff"} strokeWidth="9" />
+      {variant === "prohibition"
+        ? <path d="M243 174 L333 84" stroke="#dc2626" strokeWidth="16" strokeLinecap="round" />
+        : <path d="M288 174 V84 M288 84 L252 120 M288 84 L324 120"
+            stroke="#fff" strokeWidth="16" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+    </SvgFrame>
+  );
+}
+
+function RegulatoryOverviewSign() {
+  return (
+    <SvgFrame label="Regulatory signs overview">
+      <circle cx="170" cy="130" r="62" fill="#2563eb" stroke="#fff" strokeWidth="7" />
+      <path d="M170 170 V90 M170 90 L140 120 M170 90 L200 120" stroke="#fff" strokeWidth="14" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="320" cy="130" r="62" fill="#fff" stroke="#dc2626" strokeWidth="11" />
+      <path d="M280 170 L360 90" stroke="#dc2626" strokeWidth="14" strokeLinecap="round" />
+      <polygon points="400,68 530,68 465,188" fill="#fff" stroke="#c62828" strokeWidth="11" strokeLinejoin="round" />
     </SvgFrame>
   );
 }
@@ -233,8 +393,36 @@ function GuidanceSign() {
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
 
-  // Exact asset routing takes priority over text heuristics.
-  if (visualAssetId === "visual_335") return <KeepLeftSign />;
+  // Exact regulatory-sign asset routing takes priority over text heuristics.
+  const regulatoryVisuals = {
+    visual_326: <StopSign />,
+    visual_327: <StopLineScene />,
+    visual_328: <YieldSign />,
+    visual_329: <YieldPedestriansSign />,
+    visual_330: <MiniCircleSign />,
+    visual_331: <NoEntrySign />,
+    visual_332: <OneWaySign />,
+    visual_333: <SpeedSign speed="60" />,
+    visual_334: <SpeedSign speed="60" />,
+    visual_335: <KeepLeftSign />,
+    visual_336: <ArrowCommandSign direction="downRight" label="Keep right regulatory sign" />,
+    visual_337: <ArrowCommandSign direction="left" label="Proceed left only sign" />,
+    visual_338: <ArrowCommandSign direction="right" label="Proceed right only sign" />,
+    visual_339: <ArrowCommandSign direction="straight" label="Proceed straight only sign" />,
+    visual_340: <ArrowCommandSign direction="turnLeft" label="Turn left sign" />,
+    visual_341: <ArrowCommandSign direction="turnRight" label="Turn right sign" />,
+    visual_342: <PedestriansOnlySign />,
+    visual_343: <CyclesOnlySign />,
+    visual_344: <MotorcycleOnlySign />,
+    visual_345: <MotorCarsOnlySign />,
+    visual_346: <ArrowCommandSign direction="straight" label="Regulatory command sign example" />,
+    visual_347: <ProhibitionExampleSign />,
+    visual_348: <TemporaryRegulatorySign variant="command" />,
+    visual_349: <TemporaryRegulatorySign variant="prohibition" />,
+    visual_350: <RegulatoryOverviewSign />,
+  };
+
+  if (regulatoryVisuals[visualAssetId]) return regulatoryVisuals[visualAssetId];
 
   if (q.includes("stop sign")) return <StopSign />;
   if (q.includes("yield sign") || q.includes("give way sign")) return <YieldSign />;
