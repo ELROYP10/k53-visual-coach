@@ -115,6 +115,18 @@ function RoadworksSign() {
   );
 }
 
+
+function KeepLeftSign() {
+  return (
+    <SvgFrame label="Keep left regulatory sign">
+      <rect x="283" y="190" width="10" height="130" fill="#475569" />
+      <circle cx="288" cy="125" r="92" fill="#2563eb" stroke="#fff" strokeWidth="8" />
+      <path d="M330 70 L245 155 M245 155 L245 112 M245 155 L288 155"
+        stroke="#fff" strokeWidth="18" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </SvgFrame>
+  );
+}
+
 function TrafficLight({ active = "red", arrow = false }) {
   const light = (name, cy) => (
     <circle cx="320" cy={cy} r="34" fill={active === name ? (name === "red" ? "#dc2626" : name === "amber" ? "#f59e0b" : "#16a34a") : "#374151"} />
@@ -218,8 +230,11 @@ function GuidanceSign() {
   );
 }
 
-function inferVisual(questionText = "", visualType = "") {
+function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
+
+  // Exact asset routing takes priority over text heuristics.
+  if (visualAssetId === "visual_335") return <KeepLeftSign />;
 
   if (q.includes("stop sign")) return <StopSign />;
   if (q.includes("yield sign") || q.includes("give way sign")) return <YieldSign />;
@@ -267,7 +282,7 @@ function inferVisual(questionText = "", visualType = "") {
 export default function K53Visual({ visualAssetId, visualType, questionText }) {
   if (!visualType || visualType === "none") return null;
 
-  const visual = inferVisual(questionText, visualType);
+  const visual = inferVisual(questionText, visualType, visualAssetId);
   if (!visual) return null;
 
   return (
