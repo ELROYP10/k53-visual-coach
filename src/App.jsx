@@ -15,6 +15,8 @@ function App() {
   const [focusMistakes, setFocusMistakes] = useState([]);
   const [mistakePracticeTexts, setMistakePracticeTexts] = useState([]);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -33,6 +35,89 @@ function App() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      if (!user) {
+        if (!cancelled) {
+          setProfile(null);
+          setProfileLoading(false);
+        }
+        return;
+      }
+
+      setProfileLoading(true);
+
+      const { data: existing, error: readError } = await supabase
+        .from("user_profiles")
+        .select("user_id,plan,premium_until,payment_reference,created_at,updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (readError) {
+        console.error("Could not load user profile:", readError);
+        setProfile(null);
+        setProfileLoading(false);
+        return;
+      }
+
+      if (existing) {
+        setProfile(existing);
+        setProfileLoading(false);
+        return;
+      }
+
+      const { data: created, error: createError } = await supabase
+        .from("user_profiles")
+        .insert({ user_id: user.id })
+        .select("user_id,plan,premium_until,payment_reference,created_at,updated_at")
+        .single();
+
+      if (cancelled) return;
+
+      if (createError) {
+        console.error("Could not create user profile:", createError);
+        setProfile(null);
+      } else {
+        setProfile(created);
+      }
+
+      setProfileLoading(false);
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const hasPremiumAccess =
+    profile?.plan === "premium" &&
+    (!profile?.premium_until || new Date(profile.premium_until).getTime() > Date.now());
+
+  const openFullAccess = () => {
+    if (!user) {
+      setShowAuth(true);
+      setShowDashboard(false);
+      return;
+    }
+
+    if (hasPremiumAccess) {
+      setShowDashboard(true);
+      setShowAuth(false);
+      return;
+    }
+
+    window.alert(
+      "Full Access payments are being connected next. Your account is currently on the Free plan."
+    );
+  };
 
 if (showDashboard && user) {
   return (
@@ -266,7 +351,7 @@ if (showTest) {
     setShowDashboard(false);
   }}
 >
-  {user ? "My Account" : "Sign Up / Log In"}
+  {user ? (profileLoading ? "My Account" : `My Account · ${hasPremiumAccess ? "Premium" : "Free"}`) : "Sign Up / Log In"}
 </button>
         <button
           className="navButton"
@@ -306,8 +391,8 @@ if (showTest) {
               Start Free Test
             </button>
 
-            <button className="secondaryButton">
-              View Full Access — R79
+            <button className="secondaryButton" onClick={openFullAccess}>
+              {hasPremiumAccess ? "Full Access Unlocked" : "View Full Access — R79"}
             </button>
           </div>
 
