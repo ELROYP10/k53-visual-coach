@@ -132,6 +132,97 @@ function RoadworksSign() {
 }
 
 
+
+function WarningFrame({ label, children }) {
+  return (
+    <SvgFrame label={label}>
+      <rect x="283" y="190" width="10" height="130" fill="#475569" />
+      <polygon points="288,36 400,214 176,214" fill="#fff" stroke="#dc2626" strokeWidth="12" strokeLinejoin="round" />
+      {children}
+    </SvgFrame>
+  );
+}
+
+function JunctionWarning({ kind }) {
+  const paths = {
+    cross: "M288 178 V76 M235 128 H341",
+    tee: "M288 180 V104 M235 104 H341",
+    side: "M288 180 V76 M288 126 H345",
+  };
+  return <WarningFrame label={`${kind} junction warning`}><path d={paths[kind]} stroke="#111827" strokeWidth="14" fill="none" strokeLinecap="round" /></WarningFrame>;
+}
+
+function CurveWarning({ kind }) {
+  const paths = {
+    gentle: "M260 178 C260 145 315 145 315 92",
+    sharp: "M255 178 C255 138 330 150 330 88",
+    hairpin: "M270 180 V130 Q270 92 310 92 Q345 92 345 125 Q345 155 315 155 H292",
+    winding: "M270 182 C340 155 235 125 310 92 C335 80 330 66 330 62",
+  };
+  return <WarningFrame label={`${kind} road warning`}><path d={paths[kind]} stroke="#111827" strokeWidth="14" fill="none" strokeLinecap="round" /></WarningFrame>;
+}
+
+function LaneEndsWarning() {
+  return <WarningFrame label="Lane ends warning"><path d="M245 82 L270 180 M335 82 L305 180 M290 82 V180" stroke="#111827" strokeWidth="12" fill="none" strokeLinecap="round" /></WarningFrame>;
+}
+
+function ChildrenWarning() {
+  return <WarningFrame label="Children warning">
+    <circle cx="270" cy="102" r="10" fill="#111827"/><circle cx="309" cy="112" r="9" fill="#111827"/>
+    <path d="M270 115 L267 148 M267 126 L245 140 M267 148 L250 174 M267 148 L285 174 M309 123 L306 151 M306 132 L325 143 M306 151 L292 174 M306 151 L320 174" stroke="#111827" strokeWidth="8" fill="none" strokeLinecap="round"/>
+  </WarningFrame>;
+}
+
+function CyclistsWarning() {
+  return <WarningFrame label="Pedal cyclists warning">
+    <circle cx="255" cy="157" r="25" fill="none" stroke="#111827" strokeWidth="7"/><circle cx="324" cy="157" r="25" fill="none" stroke="#111827" strokeWidth="7"/>
+    <path d="M255 157 L278 116 L301 157 L255 157 M278 116 H307 L324 157 M268 106 H286" stroke="#111827" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </WarningFrame>;
+}
+
+function AnimalWarning({ wild=false }) {
+  return <WarningFrame label={wild ? "Wild animals warning" : "Domestic animals warning"}>
+    {wild ? <>
+      <path d="M235 145 Q255 112 292 118 L330 104 L350 120 L330 132 L318 165 M275 132 L260 169 M305 132 L298 169" stroke="#111827" strokeWidth="9" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M330 104 L342 84 M337 105 L354 91" stroke="#111827" strokeWidth="6"/>
+    </> : <>
+      <path d="M232 142 Q250 112 292 118 L326 105 L347 119 L330 134 L318 166 M260 134 L250 170 M298 134 L292 170" stroke="#111827" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M327 105 L337 90" stroke="#111827" strokeWidth="6"/>
+    </>}
+  </WarningFrame>;
+}
+
+function RailwayWarning() {
+  return <WarningFrame label="Railway crossing warning">
+    <path d="M245 92 L331 174 M331 92 L245 174" stroke="#111827" strokeWidth="14" strokeLinecap="round"/>
+    <line x1="238" y1="178" x2="338" y2="178" stroke="#111827" strokeWidth="8"/>
+  </WarningFrame>;
+}
+
+function SlopeWarning({ ascent=false }) {
+  return <WarningFrame label={ascent ? "Steep ascent warning" : "Steep descent warning"}>
+    <path d={ascent ? "M235 170 L342 92" : "M235 92 L342 170"} stroke="#111827" strokeWidth="13"/>
+    <rect x="263" y="119" width="58" height="28" rx="5" fill="#111827" transform={ascent ? "rotate(-36 292 133)" : "rotate(36 292 133)"}/>
+    <circle cx="276" cy="150" r="8" fill="#111827"/><circle cx="315" cy="150" r="8" fill="#111827"/>
+  </WarningFrame>;
+}
+
+function RoadNarrowsWarning() {
+  return <WarningFrame label="Road narrows warning"><path d="M238 82 L270 180 M338 82 L306 180" stroke="#111827" strokeWidth="14" fill="none" strokeLinecap="round"/></WarningFrame>;
+}
+
+function SlipperyRoadWarning() {
+  return <WarningFrame label="Slippery road warning">
+    <path d="M248 116 H315 L330 143 H238 Z" fill="#111827"/>
+    <circle cx="260" cy="148" r="9" fill="#111827"/><circle cx="311" cy="148" r="9" fill="#111827"/>
+    <path d="M245 166 C270 150 278 184 301 166 C320 151 330 174 346 164" stroke="#111827" strokeWidth="7" fill="none" strokeLinecap="round"/>
+  </WarningFrame>;
+}
+
+function WarningOverview() {
+  return <WarningFrame label="General warning sign"><text x="288" y="164" textAnchor="middle" fill="#111827" fontSize="74" fontWeight="900">!</text></WarningFrame>;
+}
+
 function KeepLeftSign() {
   return (
     <SvgFrame label="Keep left regulatory sign">
@@ -393,6 +484,47 @@ function GuidanceSign() {
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
 
+  // RM14 bicycle-lane questions need a dedicated road marking instead of the
+  // generic centre-line fallback used by other road-marking questions.
+  if (q.includes("bicycle lane") || q.includes("rm14")) {
+    return (
+      <SvgFrame label="RM14 bicycle lane road marking">
+        <rect x="70" y="20" width="500" height="280" rx="18" fill="#4b5563" />
+        <line
+          x1="320"
+          y1="20"
+          x2="320"
+          y2="300"
+          stroke="#ffffff"
+          strokeWidth="8"
+          strokeDasharray="24 18"
+        />
+
+        <circle cx="410" cy="210" r="34" fill="none" stroke="#ffffff" strokeWidth="8" />
+        <circle cx="510" cy="210" r="34" fill="none" stroke="#ffffff" strokeWidth="8" />
+
+        <circle cx="458" cy="92" r="15" fill="#ffffff" />
+        <path
+          d="M458 112 L435 150 L475 150 L510 210 M435 150 L410 210 M435 150 L485 180 M485 180 L510 210"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <path
+          d="M460 260 L460 185 M440 210 L460 185 L480 210"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </SvgFrame>
+    );
+  }
+
   // Exact regulatory-sign asset routing takes priority over text heuristics.
   const regulatoryVisuals = {
     visual_326: <StopSign />,
@@ -423,6 +555,38 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   };
 
   if (regulatoryVisuals[visualAssetId]) return regulatoryVisuals[visualAssetId];
+
+
+  const warningVisuals = {
+    visual_351: <WarningOverview />,
+    visual_352: <WarningOverview />,
+    visual_353: <JunctionWarning kind="cross" />,
+    visual_354: <JunctionWarning kind="tee" />,
+    visual_355: <JunctionWarning kind="side" />,
+    visual_356: <TrafficCircleSign />,
+    visual_357: <CurveWarning kind="gentle" />,
+    visual_358: <CurveWarning kind="sharp" />,
+    visual_359: <CurveWarning kind="hairpin" />,
+    visual_360: <CurveWarning kind="winding" />,
+    visual_361: <LaneEndsWarning />,
+    visual_362: <ChildrenWarning />,
+    visual_363: <CyclistsWarning />,
+    visual_364: <AnimalWarning />,
+    visual_365: <AnimalWarning wild />,
+    visual_366: <RailwayWarning />,
+    visual_367: <SlopeWarning ascent />,
+    visual_368: <SlopeWarning />,
+    visual_369: <RoadNarrowsWarning />,
+    visual_370: <SlipperyRoadWarning />,
+    visual_371: <RoadworksSign />,
+    visual_372: <WarningOverview />,
+    visual_373: <WarningOverview />,
+    visual_374: <WarningOverview />,
+    visual_375: <WarningOverview />,
+  };
+
+  if (warningVisuals[visualAssetId]) return warningVisuals[visualAssetId];
+
 
   if (q.includes("stop sign")) return <StopSign />;
   if (q.includes("yield sign") || q.includes("give way sign")) return <YieldSign />;
