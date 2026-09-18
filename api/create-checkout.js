@@ -22,8 +22,9 @@ export default async function handler(request, response) {
   const yocoSecretKey = process.env.YOCO_SECRET_KEY;
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
-  if (!yocoSecretKey || !supabaseUrl || !supabaseAnonKey) {
+  if (!yocoSecretKey || !supabaseUrl || !supabaseAnonKey || !supabaseSecretKey) {
     return response
       .status(500)
       .json({ error: "Payment service is not configured" });
@@ -102,8 +103,7 @@ export default async function handler(request, response) {
       {
         method: "PATCH",
         headers: {
-          Authorization: authorization,
-          apikey: supabaseAnonKey,
+          apikey: supabaseSecretKey,
           "Content-Type": "application/json",
           Prefer: "return=minimal",
         },
