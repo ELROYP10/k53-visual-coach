@@ -3,6 +3,7 @@ import "./App.css";
 import K53Test from "./components/K53Test";
 import Auth from "./components/Auth";
 import Dashboard from "./components/Dashboard";
+import AccountGate from "./components/AccountGate";
 import MistakePractice from "./components/MistakePractice";
 import { supabase } from "./lib/supabase";
 
@@ -234,7 +235,20 @@ function App() {
     }
   };
 
-if (showDashboard && user) {
+if (showDashboard && user && !hasPremiumAccess) {
+  return (
+    <AccountGate
+      user={user}
+      onUpgrade={() => {
+        setShowDashboard(false);
+        openFullAccess();
+      }}
+      onBack={() => setShowDashboard(false)}
+    />
+  );
+}
+
+if (showDashboard && user && hasPremiumAccess) {
   return (
     <Dashboard
       user={user}
