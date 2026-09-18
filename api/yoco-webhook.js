@@ -75,9 +75,9 @@ export default async function handler(request, response) {
 
   const webhookSecret = process.env.YOCO_WEBHOOK_SECRET;
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
-  if (!webhookSecret || !supabaseUrl || !serviceRoleKey) {
+  if (!webhookSecret || !supabaseUrl || !supabaseSecretKey) {
     console.error("Yoco webhook is not configured");
     return response.status(500).json({ error: "Webhook is not configured" });
   }
@@ -125,8 +125,7 @@ export default async function handler(request, response) {
     }
 
     const supabaseHeaders = {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: supabaseSecretKey,
       "Content-Type": "application/json",
     };
 
