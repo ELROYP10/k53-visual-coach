@@ -18,6 +18,7 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -95,6 +96,87 @@ function App() {
 
     return () => {
       cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const paymentResult = new URLSearchParams(window.location.search).get("payment");
+
+    if (!paymentResult) return undefined;
+
+    if (paymentResult === "cancelled") {
+      setPaymentNotice({
+        type: "info",
+        text: "Payment cancelled. No charge was completed.",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+      return undefined;
+    }
+
+    if (paymentResult === "failed") {
+      setPaymentNotice({
+        type: "error",
+        text: "Payment was not completed. Please try again when ready.",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+      return undefined;
+    }
+
+    if (paymentResult !== "success") return undefined;
+
+    let cancelled = false;
+    let attempts = 0;
+    let timeoutId;
+
+    setPaymentNotice({
+      type: "info",
+      text: "Payment received. Securely verifying your access…",
+    });
+
+    const verifyAccess = async () => {
+      const { data: refreshedProfile, error } = await supabase
+        .from("user_profiles")
+        .select("user_id,plan,premium_until,payment_reference,created_at,updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      const paid =
+        ["standard", "premium"].includes(refreshedProfile?.plan) &&
+        (!refreshedProfile?.premium_until ||
+          new Date(refreshedProfile.premium_until).getTime() > Date.now());
+
+      if (!error && paid) {
+        setProfile(refreshedProfile);
+        setPaymentNotice({
+          type: "success",
+          text: "Payment verified. Full Access is now unlocked.",
+        });
+        window.history.replaceState({}, "", window.location.pathname);
+        return;
+      }
+
+      attempts += 1;
+
+      if (attempts >= 15) {
+        setPaymentNotice({
+          type: "info",
+          text: "Your payment is still being verified. Refresh this page shortly.",
+        });
+        return;
+      }
+
+      timeoutId = window.setTimeout(verifyAccess, 2000);
+    };
+
+    verifyAccess();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
     };
   }, [user]);
 
@@ -281,6 +363,27 @@ if (showTest) {
       margin-bottom: 12px;
     }
 
+    .k53-home-one-screen .paymentNotice {
+      max-width: 650px;
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #cbd5e1;
+      background: #0f172a;
+      font-size: 14px;
+    }
+
+    .k53-home-one-screen .paymentNotice.success {
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
+
+    .k53-home-one-screen .paymentNotice.error {
+      border-color: #ef4444;
+      color: #fecaca;
+    }
+
     .k53-home-one-screen .disclaimer {
       margin-top: 10px;
       margin-bottom: 0;
@@ -436,6 +539,16 @@ if (showTest) {
                   : "View Full Access — R79"}
             </button>
           </div>
+
+          {paymentNotice && (
+            <p
+              className={`paymentNotice ${paymentNotice.type}`}
+              role="status"
+              aria-live="polite"
+            >
+              {paymentNotice.text}
+            </p>
+          )}
 
           <p className="disclaimer">
             Independent learner-test preparation platform.
