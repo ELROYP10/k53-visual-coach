@@ -17,6 +17,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -101,7 +102,7 @@ function App() {
     profile?.plan === "premium" &&
     (!profile?.premium_until || new Date(profile.premium_until).getTime() > Date.now());
 
-  const openFullAccess = () => {
+  const openFullAccess = async () => {
     if (!user) {
       setShowAuth(true);
       setShowDashboard(false);
@@ -114,9 +115,41 @@ function App() {
       return;
     }
 
-    window.alert(
-      "Full Access payments are being connected next. Your account is currently on the Free plan."
-    );
+    if (paymentLoading) return;
+
+    setPaymentLoading(true);
+
+    try {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+
+      if (sessionError || !accessToken) {
+        setShowAuth(true);
+        setShowDashboard(false);
+        throw new Error("Please sign in again before purchasing.");
+      }
+
+      const checkoutResponse = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan: "standard" }),
+      });
+
+      const checkout = await checkoutResponse.json();
+
+      if (!checkoutResponse.ok || !checkout.redirectUrl) {
+        throw new Error(checkout.error || "Unable to start checkout.");
+      }
+
+      window.location.assign(checkout.redirectUrl);
+    } catch (error) {
+      console.error("Could not start Yoco checkout:", error);
+      window.alert(error.message || "Unable to start checkout. Please try again.");
+      setPaymentLoading(false);
+    }
   };
 
 if (showDashboard && user) {
@@ -391,8 +424,16 @@ if (showTest) {
               Start Free Test
             </button>
 
-            <button className="secondaryButton" onClick={openFullAccess}>
-              {hasPremiumAccess ? "Full Access Unlocked" : "View Full Access — R79"}
+            <button
+              className="secondaryButton"
+              onClick={openFullAccess}
+              disabled={paymentLoading}
+            >
+              {hasPremiumAccess
+                ? "Full Access Unlocked"
+                : paymentLoading
+                  ? "Opening secure checkout..."
+                  : "View Full Access — R79"}
             </button>
           </div>
 
