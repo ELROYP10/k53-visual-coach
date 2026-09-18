@@ -84,7 +84,7 @@ export default async function handler(request, response) {
 
     const checkout = await yocoResponse.json();
 
-    if (!yocoResponse.ok || !checkout.redirectUrl) {
+    if (!yocoResponse.ok || !checkout.id || !checkout.redirectUrl) {
       console.error("Yoco checkout creation failed", {
         status: yocoResponse.status,
         error: checkout?.message ?? checkout?.error ?? "Unknown Yoco error",
@@ -92,6 +92,36 @@ export default async function handler(request, response) {
 
       return response.status(502).json({
         error: "Unable to start checkout",
+      });
+    }
+
+    const profileResponse = await fetch(
+      `${supabaseUrl}/rest/v1/user_profiles?user_id=eq.${encodeURIComponent(
+        user.id,
+      )}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: authorization,
+          apikey: supabaseAnonKey,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          payment_reference: checkout.id,
+          updated_at: new Date().toISOString(),
+        }),
+      },
+    );
+
+    if (!profileResponse.ok) {
+      console.error("Unable to save pending checkout", {
+        status: profileResponse.status,
+        checkoutId: checkout.id,
+      });
+
+      return response.status(500).json({
+        error: "Unable to prepare payment",
       });
     }
 
