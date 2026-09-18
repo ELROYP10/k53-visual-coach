@@ -129,6 +129,30 @@ export default async function handler(request, response) {
       "Content-Type": "application/json",
     };
 
+    const processedResponse = await fetch(
+      `${supabaseUrl}/rest/v1/user_profiles?payment_reference=eq.${encodeURIComponent(
+        payment.id,
+      )}&select=user_id&limit=1`,
+      { headers: supabaseHeaders },
+    );
+    const processedProfiles = await processedResponse.json();
+
+    if (!processedResponse.ok) {
+      console.error("Unable to check Yoco payment idempotency", {
+        eventId: event.id,
+        paymentId: payment.id,
+        status: processedResponse.status,
+      });
+      return response.status(500).json({ error: "Unable to verify payment state" });
+    }
+
+    if (processedProfiles?.[0]?.user_id) {
+      return response.status(200).json({
+        received: true,
+        duplicate: true,
+      });
+    }
+
     const profileResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_profiles?payment_reference=eq.${encodeURIComponent(
         checkoutId,
