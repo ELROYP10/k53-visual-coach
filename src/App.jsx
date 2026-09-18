@@ -99,7 +99,7 @@ function App() {
   }, [user]);
 
   const hasPremiumAccess =
-    profile?.plan === "premium" &&
+    ["standard", "premium"].includes(profile?.plan) &&
     (!profile?.premium_until || new Date(profile.premium_until).getTime() > Date.now());
 
   const openFullAccess = async () => {
