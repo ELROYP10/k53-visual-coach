@@ -149,6 +149,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
       const { data, error } = await supabase
         .from("k53_questions")
         .select("question_code,section,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,visual_asset_id,visual_type,status")
+        .like("status", "APPROVED%")
         .order("question_code", { ascending: true });
 
       if (!active) return;
