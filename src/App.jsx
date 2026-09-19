@@ -10,7 +10,9 @@ import { supabase } from "./lib/supabase";
 function App() {
   const [showTest, setShowTest] = useState(false);
   const [showMistakePractice, setShowMistakePractice] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
+  const [showAuth, setShowAuth] = useState(() =>
+    new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
+  );
   const [showDashboard, setShowDashboard] = useState(false);
   const [focusCategory, setFocusCategory] = useState(null);
   const [focusMistakes, setFocusMistakes] = useState([]);
@@ -29,8 +31,15 @@ function App() {
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setUser(session?.user ?? null);
+
+        if (event === "PASSWORD_RECOVERY") {
+          setShowAuth(true);
+          setShowDashboard(false);
+          setShowTest(false);
+          setShowMistakePractice(false);
+        }
       }
     );
 
