@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function Auth({ onClose }) {
-  const [mode, setMode] = useState("signup");
+  const [mode, setMode] = useState(() =>
+    new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
+      ? "recovery"
+      : "signup"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
@@ -26,9 +31,14 @@ export default function Auth({ onClose }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (isMounted) {
         setUser(session?.user ?? null);
+
+        if (event === "PASSWORD_RECOVERY") {
+          setMode("recovery");
+          setMessage("");
+        }
       }
     });
 
@@ -44,7 +54,32 @@ export default function Auth({ onClose }) {
     setMessage("");
 
     try {
-      if (mode === "signup") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/`,
+        });
+
+        if (error) throw error;
+
+        setMessage(
+          "If an account exists for this email, a secure password-reset link has been sent."
+        );
+      } else if (mode === "recovery") {
+        if (password !== confirmPassword) {
+          throw new Error("The passwords do not match.");
+        }
+
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+
+        await supabase.auth.signOut();
+        window.history.replaceState({}, "", window.location.pathname);
+        setUser(null);
+        setPassword("");
+        setConfirmPassword("");
+        setMode("signin");
+        setMessage("Password updated securely. Sign in with your new password.");
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -258,7 +293,7 @@ export default function Auth({ onClose }) {
     `}</style>
   );
 
-  if (user) {
+  if (user && mode !== "recovery") {
     return (
       <>
         {oneScreenStyles}
@@ -304,61 +339,117 @@ export default function Auth({ onClose }) {
 
         <p className="eyebrow">K53 VISUAL COACH ACCOUNT</p>
 
-        <h2>{mode === "signup" ? "Create your account" : "Welcome back"}</h2>
+        <h2>
+          {mode === "signup"
+            ? "Create your account"
+            : mode === "forgot"
+              ? "Reset your password"
+              : mode === "recovery"
+                ? "Create new password"
+                : "Welcome back"}
+        </h2>
 
         <p className="auth-subtitle">
           {mode === "signup"
             ? "Save your results, track weak areas and build your exam readiness score."
-            : "Sign in to continue your K53 training."}
+            : mode === "forgot"
+              ? "Enter your account email and we will send you a secure reset link."
+              : mode === "recovery"
+                ? "Choose a strong new password for your K53 Visual Coach account."
+                : "Sign in to continue your K53 training."}
         </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </label>
+          {mode !== "recovery" && (
+            <label>
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+          )}
 
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Minimum 6 characters"
-              minLength={6}
-              required
-            />
-          </label>
+          {mode !== "forgot" && (
+            <label>
+              {mode === "recovery" ? "New password" : "Password"}
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Minimum 8 characters"
+                minLength={8}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                required
+              />
+            </label>
+          )}
+
+          {mode === "recovery" && (
+            <label>
+              Confirm new password
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Enter the new password again"
+                minLength={8}
+                autoComplete="new-password"
+                required
+              />
+            </label>
+          )}
 
           <button type="submit" className="primary-btn" disabled={loading}>
             {loading
               ? "Please wait..."
               : mode === "signup"
                 ? "Create Account"
-                : "Sign In"}
+                : mode === "forgot"
+                  ? "Send Reset Link"
+                  : mode === "recovery"
+                    ? "Update Password"
+                    : "Sign In"}
           </button>
         </form>
 
         {message && <div className="auth-message">{message}</div>}
 
-        <button
-          className="auth-switch"
-          type="button"
-          onClick={() => {
-            setMode(mode === "signup" ? "signin" : "signup");
-            setMessage("");
-          }}
-        >
-          {mode === "signup"
-            ? "Already have an account? Sign in"
-            : "Need an account? Create one"}
-        </button>
+        {mode === "signin" && (
+          <button
+            className="auth-switch"
+            type="button"
+            onClick={() => {
+              setMode("forgot");
+              setPassword("");
+              setMessage("");
+            }}
+          >
+            Forgot password?
+          </button>
+        )}
+
+        {mode !== "recovery" && (
+          <button
+            className="auth-switch"
+            type="button"
+            onClick={() => {
+              setMode(mode === "signup" ? "signin" : "signup");
+              setPassword("");
+              setMessage("");
+            }}
+          >
+            {mode === "signup"
+              ? "Already have an account? Sign in"
+              : mode === "forgot"
+                ? "Back to sign in"
+                : "Need an account? Create one"}
+          </button>
+        )}
       </div>
     </div>
     </>
