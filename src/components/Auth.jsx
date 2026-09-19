@@ -1,5 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+
+function TurnstileChallenge({ onToken }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!turnstileSiteKey) return undefined;
+
+    let widgetId;
+    let cancelled = false;
+
+    const renderWidget = () => {
+      if (cancelled || !containerRef.current || !window.turnstile) return;
+
+      widgetId = window.turnstile.render(containerRef.current, {
+        sitekey: turnstileSiteKey,
+        theme: "dark",
+        callback: onToken,
+        "expired-callback": () => onToken(""),
+        "error-callback": () => onToken(""),
+      });
+    };
+
+    const existingScript = document.querySelector(
+      'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"]'
+    );
+
+    if (window.turnstile) {
+      renderWidget();
+    } else if (existingScript) {
+      existingScript.addEventListener("load", renderWidget, { once: true });
+    } else {
+      const script = document.createElement("script");
+      script.src =
+        "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.addEventListener("load", renderWidget, { once: true });
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      cancelled = true;
+      if (widgetId !== undefined && window.turnstile) {
+        window.turnstile.remove(widgetId);
+      }
+    };
+  }, [onToken]);
+
+  if (!turnstileSiteKey) return null;
+
+  return <div className="captcha-wrap" ref={containerRef} />;
+}
 
 export default function Auth({ onClose }) {
   const [mode, setMode] = useState(() =>
@@ -13,6 +67,8 @@ export default function Auth({ onClose }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaVersion, setCaptchaVersion] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,9 +110,14 @@ export default function Auth({ onClose }) {
     setMessage("");
 
     try {
+      if (mode !== "recovery" && turnstileSiteKey && !captchaToken) {
+        throw new Error("Please complete the security check.");
+      }
+
       if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/`,
+          captchaToken,
         });
 
         if (error) throw error;
@@ -83,6 +144,7 @@ export default function Auth({ onClose }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: { captchaToken },
         });
 
         if (error) throw error;
@@ -94,6 +156,7 @@ export default function Auth({ onClose }) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: { captchaToken },
         });
 
         if (error) throw error;
@@ -104,6 +167,10 @@ export default function Auth({ onClose }) {
       setMessage(error.message || "Something went wrong.");
     } finally {
       setLoading(false);
+      if (mode !== "recovery" && turnstileSiteKey) {
+        setCaptchaToken("");
+        setCaptchaVersion((version) => version + 1);
+      }
     }
   };
 
@@ -259,6 +326,12 @@ export default function Auth({ onClose }) {
         cursor: wait;
       }
 
+      .captcha-wrap {
+        display: grid;
+        place-items: center;
+        min-height: 65px;
+      }
+
       .auth-switch {
         width: 100%;
         margin-top: 12px;
@@ -402,6 +475,13 @@ export default function Auth({ onClose }) {
                 required
               />
             </label>
+          )}
+
+          {mode !== "recovery" && turnstileSiteKey && (
+            <TurnstileChallenge
+              key={`${mode}-${captchaVersion}`}
+              onToken={setCaptchaToken}
+            />
           )}
 
           <button type="submit" className="primary-btn" disabled={loading}>
