@@ -7,6 +7,7 @@ import AccountGate from "./components/AccountGate";
 import MistakePractice from "./components/MistakePractice";
 import LegalCenter from "./components/LegalCenter";
 import { supabase } from "./lib/supabase";
+import { trackEvent } from "./lib/analytics";
 
 const LEGAL_PAGES = ["privacy", "terms", "refunds", "contact"];
 
@@ -176,6 +177,16 @@ function App() {
 
       if (!error && paid) {
         setProfile(refreshedProfile);
+        trackEvent("purchase", {
+          value: refreshedProfile.plan === "premium" ? 129 : 79,
+          currency: "ZAR",
+          items: [
+            {
+              item_id: refreshedProfile.plan,
+              item_name: "K53 Visual Coach Full Access",
+            },
+          ],
+        });
         setPaymentNotice({
           type: "success",
           text: "Payment verified. Full Access is now unlocked.",
@@ -251,6 +262,16 @@ function App() {
         throw new Error(checkout.error || "Unable to start checkout.");
       }
 
+      trackEvent("begin_checkout", {
+        value: 79,
+        currency: "ZAR",
+        items: [
+          {
+            item_id: "standard",
+            item_name: "K53 Visual Coach Full Access",
+          },
+        ],
+      });
       window.location.assign(checkout.redirectUrl);
     } catch (error) {
       console.error("Could not start Yoco checkout:", error);
@@ -266,6 +287,19 @@ function App() {
   const closeLegalPage = () => {
     window.history.pushState(null, "", window.location.pathname + window.location.search);
     setLegalPage(null);
+  };
+
+  const startTest = (source, category = null) => {
+    trackEvent("start_test", {
+      source,
+      test_type: category ? "weak_area" : "full_practice",
+      ...(category ? { category } : {}),
+    });
+    setFocusCategory(category);
+    setFocusMistakes([]);
+    setShowDashboard(false);
+    setShowAuth(false);
+    setShowTest(true);
   };
 
 if (legalPage) {
@@ -296,18 +330,10 @@ if (showDashboard && user && hasPremiumAccess) {
     <Dashboard
       user={user}
       onStartTest={() => {
-        setFocusCategory(null);
-        setFocusMistakes([]);
-        setShowDashboard(false);
-        setShowAuth(false);
-        setShowTest(true);
+        startTest("dashboard");
       }}
       onPracticeWeakAreas={(weakestCategory) => {
-        setFocusCategory(weakestCategory);
-        setFocusMistakes([]);
-        setShowDashboard(false);
-        setShowAuth(false);
-        setShowTest(true);
+        startTest("dashboard", weakestCategory);
       }}
       onPracticeMistakes={(mistakeQuestions) => {
         setFocusCategory(null);
@@ -548,7 +574,7 @@ if (showTest) {
 </button>
         <button
           className="navButton"
-          onClick={() => setShowTest(true)}
+          onClick={() => startTest("navigation")}
         >
           Start Free Test
         </button>
@@ -579,7 +605,7 @@ if (showTest) {
           <div className="buttons">
             <button
               className="primaryButton"
-              onClick={() => setShowTest(true)}
+              onClick={() => startTest("hero")}
             >
               Start Free Test
             </button>
