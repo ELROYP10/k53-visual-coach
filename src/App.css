@@ -145,6 +145,29 @@ button {
   line-height: 1.5;
 }
 
+.legal-home-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 14px;
+}
+
+.legal-home-links button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #86efac;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.legal-home-links button:hover,
+.legal-home-links button:focus-visible {
+  color: #dcfce7;
+}
+
 .scoreCard {
   background: linear-gradient(180deg, #111827, #0f172a);
   border: 1px solid #334155;
