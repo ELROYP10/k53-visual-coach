@@ -5,7 +5,15 @@ import Auth from "./components/Auth";
 import Dashboard from "./components/Dashboard";
 import AccountGate from "./components/AccountGate";
 import MistakePractice from "./components/MistakePractice";
+import LegalCenter from "./components/LegalCenter";
 import { supabase } from "./lib/supabase";
+
+const LEGAL_PAGES = ["privacy", "terms", "refunds", "contact"];
+
+const getLegalPage = () => {
+  const page = window.location.hash.slice(1);
+  return LEGAL_PAGES.includes(page) ? page : null;
+};
 
 function App() {
   const [showTest, setShowTest] = useState(false);
@@ -22,6 +30,13 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState(null);
+  const [legalPage, setLegalPage] = useState(getLegalPage);
+
+  useEffect(() => {
+    const syncLegalPage = () => setLegalPage(getLegalPage());
+    window.addEventListener("hashchange", syncLegalPage);
+    return () => window.removeEventListener("hashchange", syncLegalPage);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -243,6 +258,25 @@ function App() {
       setPaymentLoading(false);
     }
   };
+
+  const openLegalPage = (page) => {
+    window.location.hash = page;
+  };
+
+  const closeLegalPage = () => {
+    window.history.pushState(null, "", window.location.pathname + window.location.search);
+    setLegalPage(null);
+  };
+
+if (legalPage) {
+  return (
+    <LegalCenter
+      page={legalPage}
+      onNavigate={openLegalPage}
+      onHome={closeLegalPage}
+    />
+  );
+}
 
 if (showDashboard && user && !hasPremiumAccess) {
   return (
@@ -576,6 +610,12 @@ if (showTest) {
           <p className="disclaimer">
             Independent learner-test preparation platform.
             Not an official government testing service.
+            <span className="legal-home-links">
+              <button onClick={() => openLegalPage("privacy")}>Privacy</button>
+              <button onClick={() => openLegalPage("terms")}>Terms</button>
+              <button onClick={() => openLegalPage("refunds")}>Refunds</button>
+              <button onClick={() => openLegalPage("contact")}>Contact</button>
+            </span>
           </p>
         </div>
 
