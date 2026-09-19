@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="1" stop-color="#07352d"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#6ee7b7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1020" cy="85" r="260" fill="#22c55e" opacity=".08"/>
+  <circle cx="1110" cy="610" r="360" fill="#6ee7b7" opacity=".06"/>
+  <g transform="translate(82 72)">
+    <rect width="34" height="68" rx="17" fill="#152536" stroke="#6ee7b7" stroke-width="3"/>
+    <circle cx="17" cy="15" r="7" fill="#ef4444"/>
+    <circle cx="17" cy="34" r="7" fill="#facc15"/>
+    <circle cx="17" cy="53" r="7" fill="#22c55e"/>
+    <text x="56" y="46" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="700">K53 Visual Coach</text>
+  </g>
+  <text x="82" y="250" fill="#ffffff" font-family="Arial, sans-serif" font-size="80" font-weight="800">See it. Learn it.</text>
+  <text x="82" y="345" fill="#ffffff" font-family="Arial, sans-serif" font-size="80" font-weight="800">Practise it.</text>
+  <text x="82" y="440" fill="url(#green)" font-family="Arial, sans-serif" font-size="80" font-weight="800">Pass it.</text>
+  <text x="86" y="514" fill="#c7ddd7" font-family="Arial, sans-serif" font-size="28">South African learner's licence visual preparation</text>
+  <rect x="84" y="552" width="480" height="6" rx="3" fill="url(#green)"/>
+</svg>

@@ -1,0 +1,17 @@
+{
+  "name": "K53 Visual Coach",
+  "short_name": "K53 Coach",
+  "description": "Visual K53 learner's licence preparation for South Africa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07151f",
+  "theme_color": "#07151f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
