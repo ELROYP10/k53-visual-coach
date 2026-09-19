@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { trackEvent } from "../lib/analytics";
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
@@ -122,6 +123,7 @@ export default function Auth({ onClose }) {
 
         if (error) throw error;
 
+        trackEvent("sign_up", { method: "email" });
         setMessage(
           "If an account exists for this email, a secure password-reset link has been sent."
         );
