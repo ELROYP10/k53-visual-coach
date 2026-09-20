@@ -131,9 +131,9 @@ function getMistakePracticeDuration(questionCount) {
 
 function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode = "CODE_2" }) {
   const licenceLabels = {
-    CODE_1: "Code 1 · Motorcycle",
-    CODE_2: "Code 2 · Light motor vehicle",
-    CODE_3: "Code 3 · Heavy motor vehicle",
+    CODE_1: "Code 1 — Motorcycle with or without a sidecar, motor tricycle or quadrucycle",
+    CODE_2: "Code 2 — Motor vehicle, minibus, bus or goods vehicle with GVM not exceeding 3,500 kg",
+    CODE_3: "Code 3 — Motor vehicle with GVM exceeding 3,500 kg",
   };
   const licenceLabel = licenceLabels[licenceCode] || licenceLabels.CODE_2;
   const normalizedFocus = focusCategory ? focusCategory.trim() : null;
