@@ -19,6 +19,59 @@ function scenario(type){
 }
 
 const R='Rules of the Road',S='Road Traffic Signs',C='Vehicle Controls';
+const LICENCE_CONTROL_BANKS = {
+  CODE_1: [
+    ["Which control on a motorcycle is normally operated by the right hand to increase engine speed?", ["Throttle", "Clutch lever", "Rear-brake pedal", "Gear-change lever"], 0, "The throttle is normally operated by the right hand and controls engine speed."],
+    ["Which motorcycle control is normally operated by the left hand?", ["Clutch lever", "Front-brake lever", "Throttle", "Rear-brake pedal"], 0, "The clutch lever is normally operated by the left hand."],
+    ["Which motorcycle brake is normally operated by the right hand lever?", ["Front brake", "Rear brake", "Parking brake", "Engine brake only"], 0, "The right-hand lever normally operates the front brake."],
+    ["Which motorcycle brake is normally operated by the right foot?", ["Rear brake", "Front brake", "Parking brake", "Clutch brake"], 0, "The right-foot pedal normally operates the rear brake."],
+    ["Before moving off on a motorcycle, what should you check first?", ["Mirrors, blind spots and that the way is clear", "Only the fuel gauge", "Only the front wheel", "That the horn is sounding"], 0, "A rider must observe all around, including mirrors and blind spots, before moving off."],
+    ["Why should both motorcycle brakes normally be applied smoothly when slowing down?", ["To provide balanced, controlled braking", "To switch off the engine", "To make the motorcycle lean sharply", "To release the clutch automatically"], 0, "Progressive use of both brakes helps the rider slow down in a balanced and controlled way."],
+    ["What is the main purpose of the motorcycle clutch?", ["To connect or disconnect engine drive for moving off and changing gear", "To operate the headlamp", "To apply the rear brake", "To steer the motorcycle"], 0, "The clutch controls the connection between the engine and transmission."],
+    ["What should a rider do with the side stand before moving off?", ["Raise it fully", "Leave it partly down", "Use it as a footrest", "Lower it while turning"], 0, "The side stand must be fully raised before the motorcycle moves."],
+  ],
+  CODE_2: [
+    ["In an automatic transmission, what does N normally mean?", ["Neutral", "No entry", "Night", "Normal speed"], 0, "N selects neutral, so engine drive is not transmitted to the wheels."],
+    ["Which control is normally used to slow or stop a light motor vehicle?", ["Brake pedal", "Accelerator", "Indicator stalk", "Wiper control"], 0, "The brake pedal reduces speed and stops the vehicle."],
+    ["Which pedal controls engine power and acceleration?", ["Accelerator pedal", "Brake pedal", "Clutch pedal", "Parking brake"], 0, "The accelerator controls engine power and acceleration."],
+    ["In a manual vehicle, what is the clutch pedal used for?", ["Connecting or disconnecting engine drive while moving off or changing gear", "Operating the headlights", "Applying the parking brake", "Washing the windscreen"], 0, "The clutch temporarily disconnects engine drive from the gearbox."],
+    ["What is the main purpose of the parking brake?", ["To secure a stationary vehicle", "To increase engine speed", "To change lanes", "To operate the indicators"], 0, "The parking brake helps keep a parked vehicle stationary."],
+    ["What is the indicator control used for?", ["Showing an intended turn or lane change", "Increasing speed", "Stopping the engine", "Adjusting the seat"], 0, "Indicators communicate an intended change of direction."],
+    ["What are the rear-view and side mirrors used for?", ["Monitoring traffic around and behind the vehicle", "Measuring fuel level", "Controlling speed", "Applying the brakes"], 0, "Mirrors support observation but do not replace blind-spot checks."],
+    ["What is the steering wheel used for?", ["Controlling the vehicle's direction", "Operating the clutch", "Changing engine oil", "Applying the parking brake"], 0, "The steering wheel controls the direction of the vehicle."],
+  ],
+  CODE_3: [
+    ["Why must a heavy vehicle driver allow extra stopping distance?", ["Its greater mass can increase stopping distance", "Its horn is louder", "Its mirrors are larger", "Its engine turns more slowly"], 0, "A heavy vehicle's mass means more distance may be needed to stop safely."],
+    ["Before driving a heavy vehicle, what should be checked on the air-brake system?", ["That sufficient pressure builds and no warning remains active", "Only the radio", "Only the cab light", "That the clutch is held down"], 0, "The braking system must have adequate operating pressure and show no unresolved warning."],
+    ["Why should a heavy vehicle use an appropriate lower gear on a steep descent?", ["To help control speed and reduce excessive service-brake use", "To switch off the brakes", "To increase stopping distance", "To disengage the steering"], 0, "A suitable lower gear assists with controlled descending and reduces brake overheating."],
+    ["What must a driver check before moving a heavy vehicle with a load?", ["That the load is secure and does not create a dangerous projection", "Only that the cab is clean", "Only that the radio works", "That one door is open"], 0, "Loads must be safely secured and carried without creating danger."],
+    ["What is the purpose of checking a heavy vehicle's mirrors before turning?", ["To monitor traffic and road users beside and behind the long vehicle", "To measure vehicle mass", "To select a gear", "To apply the trailer brake"], 0, "Heavy vehicles have large blind areas and require careful mirror observation before turning."],
+    ["Why must a heavy vehicle take special care when turning?", ["Its rear wheels may follow a tighter path than the front wheels", "It cannot use indicators", "It has no blind spots", "It must always cross the centre line"], 0, "The long wheelbase can cause the rear wheels to cut in toward the inside of a turn."],
+    ["What should be checked when coupling a trailer?", ["That the coupling and safety connections are correctly secured", "Only the trailer paint", "That the trailer doors are open", "That the horn is disconnected"], 0, "A trailer must be correctly coupled with all required safety and service connections secured."],
+    ["What should a heavy vehicle driver do if a brake-system warning activates while driving?", ["Stop safely and have the fault addressed", "Continue at normal speed", "Accelerate to build pressure", "Ignore it until the next service"], 0, "A brake warning can indicate a serious safety fault and requires a safe stop and inspection."],
+  ],
+};
+
+function prepareLicenceControls(licenceCode) {
+  const bank = LICENCE_CONTROL_BANKS[licenceCode] || LICENCE_CONTROL_BANKS.CODE_2;
+  return bank.map((sourceQ, index) => {
+    const options = [...sourceQ[1]];
+    const correctText = options[sourceQ[2]];
+    const shuffledOptions = shuffle(options);
+    return {
+      id: `${licenceCode}-VC-${String(index + 1).padStart(2, "0")}`,
+      section: C,
+      question: sourceQ[0],
+      options: shuffledOptions,
+      correct: shuffledOptions.indexOf(correctText),
+      explanation: sourceQ[3],
+      sign: null,
+      scenario: null,
+      visualAssetId: null,
+      visualType: "none",
+    };
+  });
+}
 const QUESTION_BANK=[
 // Rules 28
 [R,'When approaching a red traffic light, what must you do?',['Stop before the stop line','Slow down and continue if clear','Sound the horn','Stop only if pedestrians are present'],0,'A red light requires you to stop before the stop line and wait for a lawful signal to proceed.'],
@@ -140,6 +193,10 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
   const normalizedMistakes = Array.isArray(focusMistakes) ? focusMistakes.filter(Boolean) : [];
   const mistakeKey = normalizedMistakes.map((value) => String(value).trim()).join("||");
   const isMistakePractice = normalizedMistakes.length > 0;
+  const exitTest = () => {
+    if (typeof onExit === "function") onExit();
+    window.setTimeout(() => window.location.reload(), 0);
+  };
 
   const [questionBank, setQuestionBank] = useState([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
@@ -197,9 +254,15 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
   const questions = useMemo(() => {
     if (!questionBank.length) return [];
 
+    const scopedControls = prepareLicenceControls(licenceCode);
+    const scopedQuestionBank = [
+      ...questionBank.filter((question) => question.section !== C),
+      ...scopedControls,
+    ];
+
     if (normalizedMistakes.length > 0) {
       const mistakeSet = new Set(normalizedMistakes.map((value) => String(value).trim()));
-      return shuffle(questionBank.filter((question) => mistakeSet.has(question.question.trim())));
+      return shuffle(scopedQuestionBank.filter((question) => mistakeSet.has(question.question.trim())));
     }
 
     const categoryMap = {
@@ -209,7 +272,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
     };
 
     const pick = (section, count) =>
-      shuffle(questionBank.filter((question) => question.section === section)).slice(0, count);
+      shuffle(scopedQuestionBank.filter((question) => question.section === section)).slice(0, count);
 
     if (normalizedFocus) {
       const matchedSection = categoryMap[normalizedFocus] || normalizedFocus;
@@ -227,7 +290,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
       ...pick(S, 28),
       ...pick(C, 8),
     ]);
-  }, [questionBank, normalizedFocus, mistakeKey]);
+  }, [questionBank, normalizedFocus, mistakeKey, licenceCode]);
 
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null));
@@ -596,7 +659,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
           <div style={styles.timerRow}>
             <span style={styles.answered}>Answered {answeredCount}/{totalQuestions}</span>
             <strong style={{ color: secondsLeft <= 300 ? "#b91c1c" : "#064678" }}>⏱ {formatTime(secondsLeft)}</strong>
-            <button style={styles.exit} onClick={onExit}>Exit Test</button>
+            <button type="button" style={styles.exit} onClick={exitTest}>Exit Test</button>
           </div>
         </div>
 
