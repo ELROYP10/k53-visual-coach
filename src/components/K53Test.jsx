@@ -129,7 +129,13 @@ function getMistakePracticeDuration(questionCount) {
   return Math.min(3600, Math.max(600, secondsFromCount));
 }
 
-function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
+function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode = "CODE_2" }) {
+  const licenceLabels = {
+    CODE_1: "Code 1 · Motorcycle",
+    CODE_2: "Code 2 · Light motor vehicle",
+    CODE_3: "Code 3 · Heavy motor vehicle",
+  };
+  const licenceLabel = licenceLabels[licenceCode] || licenceLabels.CODE_2;
   const normalizedFocus = focusCategory ? focusCategory.trim() : null;
   const normalizedMistakes = Array.isArray(focusMistakes) ? focusMistakes.filter(Boolean) : [];
   const mistakeKey = normalizedMistakes.map((value) => String(value).trim()).join("||");
@@ -585,6 +591,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [] }) {
                   : "FULL 64-QUESTION PRACTICE"}
             </p>
             <h2 style={styles.heading}>Question {current + 1} of {totalQuestions}</h2>
+            <span style={{ color: "#94a3b8", fontSize: 12 }}>{licenceLabel}</span>
           </div>
           <div style={styles.timerRow}>
             <span style={styles.answered}>Answered {answeredCount}/{totalQuestions}</span>

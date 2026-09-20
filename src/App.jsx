@@ -11,6 +11,12 @@ import { trackEvent } from "./lib/analytics";
 
 const LEGAL_PAGES = ["privacy", "terms", "refunds", "contact"];
 
+const LICENCE_CATEGORIES = [
+  { code: "CODE_1", short: "Code 1", title: "Motorcycle", detail: "Motorcycles, including category-specific controls" },
+  { code: "CODE_2", short: "Code 2", title: "Light motor vehicle", detail: "Cars and light motor vehicles" },
+  { code: "CODE_3", short: "Code 3", title: "Heavy motor vehicle", detail: "Heavy motor vehicles and combination vehicles" },
+];
+
 const getLegalPage = () => {
   const page = window.location.hash.slice(1);
   return LEGAL_PAGES.includes(page) ? page : null;
@@ -32,6 +38,10 @@ function App() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState(null);
   const [legalPage, setLegalPage] = useState(getLegalPage);
+  const [licenceCode, setLicenceCode] = useState(() =>
+    window.localStorage.getItem("k53_licence_code") || "CODE_2"
+  );
+  const [showLicencePicker, setShowLicencePicker] = useState(false);
 
   useEffect(() => {
     const syncLegalPage = () => setLegalPage(getLegalPage());
@@ -293,6 +303,7 @@ function App() {
     trackEvent("start_test", {
       source,
       test_type: category ? "weak_area" : "full_practice",
+      licence_code: licenceCode,
       ...(category ? { category } : {}),
     });
     setFocusCategory(category);
@@ -368,6 +379,7 @@ if (showTest) {
       <K53Test
         focusCategory={focusCategory}
         focusMistakes={focusMistakes}
+        licenceCode={licenceCode}
         onExit={() => {
           setFocusCategory(null);
           setFocusMistakes([]);
@@ -553,6 +565,35 @@ if (showTest) {
   return (
     <div className="app k53-home-one-screen">
       <style>{homeOneScreenStyles}</style>
+      {showLicencePicker && (
+        <div className="licence-picker-backdrop" role="presentation">
+          <section className="licence-picker" role="dialog" aria-modal="true" aria-labelledby="licence-picker-title">
+            <button className="licence-picker-close" onClick={() => setShowLicencePicker(false)} aria-label="Close licence selection">×</button>
+            <p className="licence-picker-eyebrow">CHOOSE YOUR LEARNER'S LICENCE</p>
+            <h2 id="licence-picker-title">Which vehicle category are you preparing for?</h2>
+            <p className="licence-picker-copy">Your selection is saved on this device and shown throughout your practice session.</p>
+            <div className="licence-picker-options">
+              {LICENCE_CATEGORIES.map((item) => (
+                <button
+                  key={item.code}
+                  className={`licence-option${licenceCode === item.code ? " selected" : ""}`}
+                  onClick={() => {
+                    setLicenceCode(item.code);
+                    window.localStorage.setItem("k53_licence_code", item.code);
+                    trackEvent("select_licence_code", { licence_code: item.code });
+                    setShowLicencePicker(false);
+                  }}
+                >
+                  <span className="licence-option-code">{item.short}</span>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </button>
+              ))}
+            </div>
+            <p className="licence-picker-note">Rules of the Road and road signs are shared. Category-specific vehicle-control banks are being verified before release.</p>
+          </section>
+        </div>
+      )}
       <nav className="navbar">
         <div className="brand">
           🚦 <span>K53 Visual Coach</span>
@@ -622,6 +663,10 @@ if (showTest) {
                   : "View Full Access — R79"}
             </button>
           </div>
+
+          <button className="licence-choice" onClick={() => setShowLicencePicker(true)}>
+            Licence: {LICENCE_CATEGORIES.find((item) => item.code === licenceCode)?.short} · {LICENCE_CATEGORIES.find((item) => item.code === licenceCode)?.title} — Change
+          </button>
 
           {paymentNotice && (
             <p

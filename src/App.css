@@ -145,6 +145,145 @@ button {
   line-height: 1.5;
 }
 
+.licence-choice {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #86efac;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.licence-choice:hover,
+.licence-choice:focus-visible {
+  color: #dcfce7;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.licence-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 10, 18, 0.88);
+  backdrop-filter: blur(10px);
+}
+
+.licence-picker {
+  position: relative;
+  width: min(780px, 100%);
+  padding: 30px;
+  border: 1px solid #2d5d50;
+  border-top: 4px solid #34d399;
+  border-radius: 22px;
+  background: #071d1a;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+}
+
+.licence-picker h2 {
+  margin: 7px 42px 8px 0;
+  color: #f8fafc;
+  font-size: clamp(1.65rem, 4vw, 2.25rem);
+}
+
+.licence-picker-eyebrow {
+  margin: 0;
+  color: #6ee7b7;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.licence-picker-copy,
+.licence-picker-note {
+  color: #a7c9c0;
+  line-height: 1.5;
+}
+
+.licence-picker-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #31564e;
+  border-radius: 11px;
+  background: #0b2924;
+  color: #d1fae5;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.licence-picker-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+
+.licence-option {
+  min-height: 155px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 18px;
+  border: 1px solid #31564e;
+  border-radius: 16px;
+  background: #09241f;
+  color: #d9f5eb;
+  text-align: left;
+  cursor: pointer;
+}
+
+.licence-option:hover,
+.licence-option:focus-visible,
+.licence-option.selected {
+  border-color: #34d399;
+  background: #0b352a;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+}
+
+.licence-option-code {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #052e16;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.licence-option strong {
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.licence-option > span:last-child {
+  color: #a7c9c0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .licence-picker {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 24px 18px;
+  }
+
+  .licence-picker-options {
+    grid-template-columns: 1fr;
+  }
+
+  .licence-option {
+    min-height: 0;
+  }
+}
+
 .legal-home-links {
   display: inline-flex;
   flex-wrap: wrap;
