@@ -12,9 +12,9 @@ import { trackEvent } from "./lib/analytics";
 const LEGAL_PAGES = ["privacy", "terms", "refunds", "contact"];
 
 const LICENCE_CATEGORIES = [
-  { code: "CODE_1", short: "Code 1", title: "Motorcycle", detail: "Motorcycles, including category-specific controls" },
-  { code: "CODE_2", short: "Code 2", title: "Light motor vehicle", detail: "Cars and light motor vehicles" },
-  { code: "CODE_3", short: "Code 3", title: "Heavy motor vehicle", detail: "Heavy motor vehicles and combination vehicles" },
+  { code: "CODE_1", short: "Code 1", title: "Motorcycle, motor tricycle or quadrucycle", detail: "With or without a sidecar" },
+  { code: "CODE_2", short: "Code 2", title: "Motor vehicle, minibus, bus or goods vehicle", detail: "GVM not exceeding 3,500 kg" },
+  { code: "CODE_3", short: "Code 3", title: "Motor vehicle", detail: "GVM exceeding 3,500 kg" },
 ];
 
 const getLegalPage = () => {
