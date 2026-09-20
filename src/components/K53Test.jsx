@@ -131,9 +131,9 @@ function getMistakePracticeDuration(questionCount) {
 
 function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode = "CODE_2" }) {
   const licenceLabels = {
-    CODE_1: "Code 1 — Motorcycle with or without a sidecar, motor tricycle or quadrucycle",
-    CODE_2: "Code 2 — Motor vehicle, minibus, bus or goods vehicle with GVM not exceeding 3,500 kg",
-    CODE_3: "Code 3 — Motor vehicle with GVM exceeding 3,500 kg",
+    CODE_1: "Code 1 · Motorcycle",
+    CODE_2: "Code 2 · GVM up to 3,500 kg",
+    CODE_3: "Code 3 · GVM over 3,500 kg",
   };
   const licenceLabel = licenceLabels[licenceCode] || licenceLabels.CODE_2;
   const normalizedFocus = focusCategory ? focusCategory.trim() : null;
@@ -460,37 +460,37 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
       : "";
 
   const styles = {
-    page: { height: "100vh", background: "#08111f", color: "#f8fafc", padding: "18px 5%", overflow: "hidden", boxSizing: "border-box", display: "grid", placeItems: "center" },
+    page: { minHeight: "100vh", background: "#eef1f4", color: "#172033", padding: "18px 5%", boxSizing: "border-box", display: "grid", placeItems: "center", fontFamily: "Arial, Helvetica, sans-serif" },
     shell: { width: "100%", maxWidth: 1100, height: "100%", margin: "0 auto", minHeight: 0, display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 12 },
-    testPage: { height: "100vh", background: "#08111f", color: "#f8fafc", padding: "12px 18px", overflow: "hidden", boxSizing: "border-box" },
-    testShell: { width: "100%", maxWidth: 1360, height: "100%", margin: "0 auto", display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr) auto", gap: 10 },
-    testCard: { minHeight: 0, background: "#111827", border: "1px solid #334155", borderRadius: 18, padding: 18, display: "grid", gridTemplateColumns: "minmax(0, 1.08fr) minmax(360px, .92fr)", gap: 20, overflow: "hidden" },
+    testPage: { minHeight: "100vh", background: "#edf0f2", color: "#111827", padding: 0, boxSizing: "border-box", fontFamily: "Arial, Helvetica, sans-serif" },
+    testShell: { width: "100%", maxWidth: 1440, minHeight: "100vh", margin: "0 auto", display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr) auto", background: "#fff", boxShadow: "0 0 40px rgba(15,23,42,.12)" },
+    testCard: { minHeight: 0, background: "#fff", padding: "24px clamp(16px, 3vw, 42px)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(390px, .95fr)", gap: "clamp(22px, 4vw, 56px)", overflow: "hidden" },
     questionPane: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
     answerPane: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center" },
-    compactMeta: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 },
-    visualStage: { flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 14, background: "#0b1424", border: "1px solid #263449", padding: 10 },
-    footerNav: { display: "grid", gridTemplateColumns: "repeat(16, 30px)", gap: 4, justifyContent: "center", alignContent: "center" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "nowrap", marginBottom: 0 },
-    eyebrow: { margin: 0, color: "#86efac", fontSize: 12, fontWeight: 800, letterSpacing: ".1em" },
+    compactMeta: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 },
+    visualStage: { flex: 1, minHeight: 250, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 10, background: "#f7f8fa", border: "1px solid #d9dee5", padding: 16 },
+    footerNav: { display: "grid", gridTemplateColumns: "repeat(16, 30px)", gap: 5, justifyContent: "center", alignContent: "center", padding: "12px 18px 18px", background: "#fff", borderTop: "1px solid #e5e7eb" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "nowrap", padding: "15px clamp(16px, 3vw, 42px)", background: "#aeb0b3", borderBottom: "1px solid #93969a" },
+    eyebrow: { margin: 0, color: "#073f70", fontSize: 12, fontWeight: 900, letterSpacing: ".1em" },
     heading: { margin: "2px 0 0", fontSize: 22 },
     timerRow: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" },
-    exit: { border: "1px solid #475569", background: "#111827", color: "white", borderRadius: 11, padding: "11px 16px", fontWeight: 800, cursor: "pointer" },
-    progressTrack: { height: 7, background: "#1e293b", borderRadius: 999, overflow: "hidden", marginBottom: 0 },
-    progressFill: { height: "100%", background: "#22c55e", width: `${((current + 1) / totalQuestions) * 100}%` },
-    answered: { color: "#94a3b8", marginBottom: 0, fontSize: 13 },
+    exit: { border: "1px solid #073f70", background: "#fff", color: "#073f70", borderRadius: 7, padding: "10px 16px", fontWeight: 800, cursor: "pointer" },
+    progressTrack: { height: 7, background: "#d6d9dd", overflow: "hidden", marginBottom: 0 },
+    progressFill: { height: "100%", background: "#06bf69", width: `${((current + 1) / totalQuestions) * 100}%` },
+    answered: { color: "#374151", marginBottom: 0, fontSize: 13 },
     card: { background: "#111827", border: "1px solid #334155", borderRadius: 18, padding: 24 },
-    badge: { display: "inline-block", color: "#86efac", background: "#052e16", borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 800 },
-    question: { fontSize: 22, lineHeight: 1.3, margin: "10px 0 12px" },
+    badge: { display: "inline-block", color: "#fff", background: "#064678", borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 800 },
+    question: { color: "#fff", background: "#064678", borderRadius: 18, padding: "17px 22px", fontSize: 21, lineHeight: 1.3, margin: "0 0 18px", textAlign: "center", boxShadow: "0 2px 4px rgba(2,35,64,.14)" },
     visualBox: { width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" },
     answers: { display: "grid", gap: 10, width: "100%" },
-    answer: { width: "100%", minHeight: 54, display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "2px solid #334155", borderRadius: 12, background: "#1f2937", color: "white", textAlign: "left", fontSize: 15, cursor: "pointer" },
-    answerSelected: { borderColor: "#22c55e", background: "#0d2818" },
-    letter: { width: 32, height: 32, flexShrink: 0, display: "grid", placeItems: "center", borderRadius: 8, background: "#0f172a", fontWeight: 900 },
+    answer: { width: "100%", minHeight: 62, display: "flex", alignItems: "center", gap: 7, padding: "13px 17px", border: "2px solid #064678", borderRadius: 15, background: "#064678", color: "white", textAlign: "left", fontSize: 16, lineHeight: 1.35, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 4px rgba(2,35,64,.12)" },
+    answerSelected: { borderColor: "#04a95d", background: "#08bd68" },
+    letter: { flexShrink: 0, fontWeight: 900 },
     actions: { display: "flex", gap: 8, flexWrap: "nowrap", marginTop: 14 },
-    secondary: { border: "1px solid #475569", background: "#111827", color: "white", borderRadius: 11, padding: "11px 16px", fontWeight: 800, cursor: "pointer" },
-    primary: { border: 0, background: "#22c55e", color: "#052e16", borderRadius: 11, padding: "11px 18px", fontWeight: 900, cursor: "pointer" },
+    secondary: { border: "1px solid #aeb4bb", background: "#f2f3f4", color: "#303640", borderRadius: 7, padding: "11px 16px", fontWeight: 700, cursor: "pointer" },
+    primary: { border: "1px solid #04a95d", background: "#08bd68", color: "#fff", borderRadius: 7, padding: "11px 18px", fontWeight: 900, cursor: "pointer" },
     navigator: { display: "grid", gridTemplateColumns: "repeat(16, 30px)", gap: 4, justifyContent: "center", width: "100%" },
-    navButton: { width: 30, height: 26, minWidth: 30, minHeight: 26, padding: 0, borderRadius: 6, color: "white", fontSize: 11, fontWeight: 800, cursor: "pointer" },
+    navButton: { width: 30, height: 26, minWidth: 30, minHeight: 26, padding: 0, borderRadius: 4, color: "white", fontSize: 11, fontWeight: 800, cursor: "pointer" },
     resultCard: { width: "min(820px, 100%)", maxHeight: "calc(100vh - 36px)", margin: 0, background: "#111827", border: "1px solid #334155", borderRadius: 20, padding: "22px 28px", textAlign: "center", boxSizing: "border-box", overflow: "hidden" },
     sections: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: 12, marginTop: 16 },
     sectionCard: { border: "1px solid #334155", borderRadius: 14, padding: 14, background: "#0f172a", textAlign: "left" },
@@ -579,9 +579,9 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
   }
 
   return (
-    <section style={styles.testPage}>
-      <div style={styles.testShell}>
-        <div style={styles.header}>
+    <section className="department-test-page" style={styles.testPage}>
+      <div className="department-test-shell" style={styles.testShell}>
+        <div className="department-test-header" style={styles.header}>
           <div>
             <p style={styles.eyebrow}>
               {isMistakePractice
@@ -591,18 +591,18 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
                   : "FULL 64-QUESTION PRACTICE"}
             </p>
             <h2 style={styles.heading}>Question {current + 1} of {totalQuestions}</h2>
-            <span style={{ color: "#94a3b8", fontSize: 12 }}>{licenceLabel}</span>
+            <span style={{ color: "#263238", fontSize: 12 }}>{licenceLabel}</span>
           </div>
           <div style={styles.timerRow}>
             <span style={styles.answered}>Answered {answeredCount}/{totalQuestions}</span>
-            <strong style={{ color: secondsLeft <= 300 ? "#fca5a5" : "#86efac" }}>⏱ {formatTime(secondsLeft)}</strong>
+            <strong style={{ color: secondsLeft <= 300 ? "#b91c1c" : "#064678" }}>⏱ {formatTime(secondsLeft)}</strong>
             <button style={styles.exit} onClick={onExit}>Exit Test</button>
           </div>
         </div>
 
         <div style={styles.progressTrack}><div style={styles.progressFill} /></div>
 
-        <div style={styles.testCard}>
+        <div className="department-test-card" style={styles.testCard}>
           <div style={styles.questionPane}>
             <div style={styles.compactMeta}>
               <span style={styles.badge}>{question.section}</span>
@@ -627,7 +627,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
             </div>
           </div>
 
-          <div style={styles.answerPane}>
+          <div className="department-answer-pane" style={styles.answerPane}>
             <div style={styles.answers}>
               {question.options.map((option, index) => (
                 <button
@@ -635,7 +635,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
                   style={{ ...styles.answer, ...(answers[current] === index ? styles.answerSelected : {}) }}
                   onClick={() => chooseAnswer(index)}
                 >
-                  <span style={styles.letter}>{String.fromCharCode(65 + index)}</span>
+                  <span style={styles.letter}>{String.fromCharCode(65 + index)})</span>
                   <span>{option}</span>
                 </button>
               ))}
@@ -661,7 +661,7 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
           </div>
         </div>
 
-        <div style={styles.footerNav}>
+        <div className="department-question-grid" style={styles.footerNav}>
           {questions.map((item, index) => (
             <button
               key={item.id}
@@ -669,8 +669,8 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
               title={flags[index] ? "Flagged" : answers[index] !== null ? "Answered" : "Unanswered"}
               style={{
                 ...styles.navButton,
-                border: index === current ? "2px solid #38bdf8" : "1px solid #334155",
-                background: flags[index] ? "#78350f" : answers[index] !== null ? "#14532d" : "#1e293b",
+                border: index === current ? "2px solid #064678" : "1px solid #8b9299",
+                background: flags[index] ? "#b45309" : answers[index] !== null ? "#08a95e" : "#59616a",
               }}
             >
               {index + 1}

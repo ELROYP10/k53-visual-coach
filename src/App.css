@@ -530,3 +530,74 @@ button {
   aspect-ratio: auto !important;
   font-size: 12px !important;
 }
+
+/* Traffic-department-inspired practice surface. Original K53 Visual Coach branding is retained. */
+.department-test-page button:focus-visible {
+  outline: 3px solid #f4c430;
+  outline-offset: 2px;
+}
+
+.department-test-page .sign-wrap {
+  margin: 0 !important;
+}
+
+.department-test-page .sign-wrap svg {
+  width: min(240px, 35vh) !important;
+  height: min(240px, 35vh) !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.department-test-page .scenario,
+.department-test-page .scenario svg {
+  width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 840px) {
+  .department-test-shell {
+    min-height: 100vh !important;
+    display: block !important;
+  }
+
+  .department-test-header {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .department-test-card {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    overflow: visible !important;
+  }
+
+  .department-answer-pane {
+    padding-bottom: 8px;
+  }
+
+  .department-question-grid {
+    grid-template-columns: repeat(8, 30px) !important;
+    position: sticky;
+    bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .department-test-card {
+    padding: 16px 12px !important;
+  }
+
+  .department-test-header {
+    padding: 12px !important;
+  }
+
+  .department-question-grid {
+    grid-template-columns: repeat(8, 28px) !important;
+    gap: 4px !important;
+  }
+
+  .department-question-grid button {
+    width: 28px !important;
+    min-width: 28px !important;
+  }
+}
