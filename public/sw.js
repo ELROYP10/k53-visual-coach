@@ -1,4 +1,4 @@
-const CACHE_NAME = 'k53-visual-coach-v1'
+const CACHE_NAME = 'k53-visual-coach-v2'
 const APP_SHELL = [
   '/',
   '/site.webmanifest',
@@ -55,6 +55,49 @@ self.addEventListener('fetch', (event) => {
         return response
       })
       return cached || network
+    }),
+  )
+})
+
+self.addEventListener('push', (event) => {
+  const fallback = {
+    title: 'K53 Visual Coach',
+    body: 'A short practice session today can keep your progress moving.',
+    url: '/?dashboard=1',
+  }
+  let message = fallback
+
+  try {
+    message = { ...fallback, ...event.data.json() }
+  } catch {
+    if (event.data?.text()) message.body = event.data.text()
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(message.title, {
+      body: message.body,
+      icon: '/pwa-icon-192.png',
+      badge: '/pwa-icon-192.png',
+      tag: 'k53-daily-coach',
+      renotify: false,
+      data: { url: message.url },
+      actions: [{ action: 'practice', title: 'Practise now' }],
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const destination = new URL(event.notification.data?.url || '/', self.location.origin).href
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const openClient = clients.find((client) => client.url.startsWith(self.location.origin))
+      if (openClient) {
+        openClient.navigate(destination)
+        return openClient.focus()
+      }
+      return self.clients.openWindow(destination)
     }),
   )
 })

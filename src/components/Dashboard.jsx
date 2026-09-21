@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import StudyCoach from "./StudyCoach";
+import NotificationSettings from "./NotificationSettings";
 
 const XP_PER_LEVEL = 500;
 
@@ -1082,6 +1083,11 @@ export default function Dashboard({
                   latestMistakePercentage={latestMistakePercentage}
                   onStartTest={onStartTest}
                   onPracticeWeakAreas={() => onPracticeWeakAreas(practiceWeakestArea)}
+                />
+                <NotificationSettings
+                  streak={gamification.streak}
+                  weakestArea={weakestArea}
+                  readiness={readiness}
                 />
               </section>
 
