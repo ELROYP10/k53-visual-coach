@@ -487,6 +487,14 @@ function VehicleControl({ kind = "steering" }) {
         <text x="320" y="282" textAnchor="middle" fill="#ffffff" fontSize="20" fontWeight="900">BRAKE</text>
         <text x="424" y="282" textAnchor="middle" fill="#cbd5e1" fontSize="18" fontWeight="800">ACCELERATOR</text>
       </>}
+      {kind === "clutch" && <>
+        <rect x="175" y="82" width="82" height="163" rx="14" fill="#2563eb" stroke="#ffffff" strokeWidth="7" />
+        <rect x="279" y="105" width="82" height="140" rx="14" fill="#64748b" stroke="#cbd5e1" strokeWidth="5" />
+        <rect x="383" y="120" width="82" height="125" rx="14" fill="#64748b" stroke="#cbd5e1" strokeWidth="5" />
+        <text x="216" y="282" textAnchor="middle" fill="#ffffff" fontSize="20" fontWeight="900">CLUTCH</text>
+        <text x="320" y="282" textAnchor="middle" fill="#cbd5e1" fontSize="18" fontWeight="800">BRAKE</text>
+        <text x="424" y="282" textAnchor="middle" fill="#cbd5e1" fontSize="18" fontWeight="800">ACCELERATOR</text>
+      </>}
       {kind === "gear" && <>
         <line x1="320" y1="215" x2="320" y2="110" stroke="#cbd5e1" strokeWidth="16" strokeLinecap="round" />
         <circle cx="320" cy="90" r="34" fill="#cbd5e1" />
@@ -496,6 +504,27 @@ function VehicleControl({ kind = "steering" }) {
         <rect x="210" y="105" width="220" height="92" rx="46" fill="#cbd5e1" stroke="#64748b" strokeWidth="8" />
         <line x1="320" y1="197" x2="320" y2="245" stroke="#cbd5e1" strokeWidth="10" />
       </>}
+    </SvgFrame>
+  );
+}
+
+function SafePhoneStopScene() {
+  return (
+    <SvgFrame label="Vehicle parked safely before using a phone">
+      <rect width="640" height="320" fill="#86b86b" />
+      <rect y="92" width="640" height="150" fill="#4b5563" />
+      <line x1="0" y1="167" x2="640" y2="167" stroke="#ffffff" strokeWidth="6" strokeDasharray="30 22" />
+      <rect y="242" width="640" height="38" fill="#d1d5db" />
+      <line x1="0" y1="242" x2="640" y2="242" stroke="#facc15" strokeWidth="8" />
+      <rect x="350" y="211" width="154" height="55" rx="14" fill="#2563eb" stroke="#ffffff" strokeWidth="5" />
+      <path d="M377 211 L401 184 H468 L490 211" fill="#2563eb" stroke="#ffffff" strokeWidth="5" strokeLinejoin="round" />
+      <circle cx="385" cy="267" r="14" fill="#111827" />
+      <circle cx="470" cy="267" r="14" fill="#111827" />
+      <rect x="112" y="69" width="92" height="158" rx="16" fill="#111827" stroke="#ffffff" strokeWidth="7" />
+      <rect x="125" y="92" width="66" height="105" rx="5" fill="#38bdf8" />
+      <circle cx="158" cy="211" r="7" fill="#cbd5e1" />
+      <path d="M235 145 L286 196 L326 118" fill="none" stroke="#16a34a" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="320" y="306" textAnchor="middle" fill="#0f172a" fontSize="20" fontWeight="900">STOP LEGALLY AND SAFELY FIRST</text>
     </SvgFrame>
   );
 }
@@ -693,6 +722,14 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
 
   if (q.includes("slow or stop a light motor vehicle")) {
     return <VehicleControl kind="brake" />;
+  }
+
+  if (q.includes("urgent phone message") && q.includes("vehicle is moving")) {
+    return <SafePhoneStopScene />;
+  }
+
+  if (q.includes("clutch pedal") && q.includes("used for")) {
+    return <VehicleControl kind="clutch" />;
   }
 
   const fallbackVisuals = {
