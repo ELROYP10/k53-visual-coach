@@ -157,6 +157,29 @@ function prepareQuestions() {
       const options = [...sourceQ[2]];
       const correctText = options[sourceQ[3]];
       const shuffledOptions = shuffle(options);
+      const fallbackVisualMap = {
+        "A triangular road sign generally warns you about:": ["fallback_warning_shape", "warning_sign"],
+        "A circular regulatory sign generally communicates:": ["fallback_regulatory_shape", "regulatory_sign"],
+        "A blue information sign is most likely to provide:": ["fallback_guidance", "guidance_sign"],
+        "A solid white line separating lanes generally means:": ["fallback_solid_line", "road_marking"],
+        "A broken lane line normally means:": ["fallback_broken_line", "road_marking"],
+        "Yellow road-edge markings are used to:": ["fallback_yellow_edge", "road_marking"],
+        "A painted stop line tells you where to:": ["fallback_stop_line", "road_marking"],
+        "Chevron signs on a sharp bend are intended to:": ["fallback_chevron", "guidance_sign"],
+        "A sign showing children is a warning that:": ["fallback_children", "warning_sign"],
+        "A slippery-road warning sign means you should:": ["fallback_slippery", "warning_sign"],
+        "A narrowing-road warning means:": ["fallback_narrows", "warning_sign"],
+        "A traffic-circle warning sign means:": ["fallback_circle", "warning_sign"],
+        "A railway-crossing warning sign tells you to:": ["fallback_railway", "warning_sign"],
+        "A no-overtaking sign means:": ["fallback_no_overtaking", "regulatory_sign"],
+        "A no-parking sign means:": ["fallback_no_parking", "regulatory_sign"],
+        "A one-way sign indicates:": ["fallback_one_way", "guidance_sign"],
+        "An arrow painted in a traffic lane tells you:": ["fallback_lane_arrow", "road_marking"],
+        "A pedestrian crossing marked by broad white stripes means:": ["fallback_crossing", "road_marking"],
+        "Temporary roadwork signs must be:": ["fallback_roadworks", "warning_sign"],
+        "A hazard-marker board is used to:": ["fallback_hazard_marker", "hazard_sign"],
+      };
+      const fallbackVisual = fallbackVisualMap[sourceQ[1]];
       return {
         id,
         section: sourceQ[0],
@@ -166,6 +189,8 @@ function prepareQuestions() {
         explanation: sourceQ[4],
         sign: sourceQ[5] || null,
         scenario: sourceQ[6] || null,
+        visualAssetId: fallbackVisual?.[0] || null,
+        visualType: fallbackVisual?.[1] || null,
       };
     })
   );

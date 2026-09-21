@@ -401,7 +401,11 @@ function RoadMarking({ kind = "generic" }) {
     <SvgFrame label="Road marking illustration">
       <rect width="640" height="320" fill="#94a3b8" />
       <rect x="0" y="0" width="640" height="320" fill="#4b5563" />
-      <line x1="320" y1="0" x2="320" y2="320" stroke="#fff" strokeWidth="7" strokeDasharray="28 20" />
+      {kind !== "edge" && kind !== "arrow" && (
+        <line x1="320" y1="0" x2="320" y2="320" stroke="#fff" strokeWidth="7" strokeDasharray={kind === "solid" ? undefined : "28 20"} />
+      )}
+      {kind === "edge" && <line x1="90" y1="0" x2="90" y2="320" stroke="#facc15" strokeWidth="11" />}
+      {kind === "arrow" && <path d="M320 260 V78 M320 78 L268 132 M320 78 L372 132" stroke="#fff" strokeWidth="18" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
       {kind === "stop" && <>
         <line x1="80" y1="235" x2="560" y2="235" stroke="#fff" strokeWidth="16" />
         <text x="320" y="205" textAnchor="middle" fill="#fff" fontSize="52" fontWeight="900">STOP</text>
@@ -414,6 +418,48 @@ function RoadMarking({ kind = "generic" }) {
         <rect key={i} x={120 + i * 52} y="115" width="26" height="95" fill="#fff" />
       ))}
       {kind === "island" && <polygon points="250,70 390,70 440,250 200,250" fill="#f8fafc" stroke="#f8fafc" strokeWidth="5" />}
+    </SvgFrame>
+  );
+}
+
+function NoParkingSign() {
+  return (
+    <SvgFrame label="No parking sign">
+      <rect x="314" y="205" width="12" height="115" fill="#475569" />
+      <circle cx="320" cy="125" r="82" fill="#2563eb" stroke="#dc2626" strokeWidth="14" />
+      <path d="M265 70 L375 180" stroke="#dc2626" strokeWidth="17" strokeLinecap="round" />
+      <text x="320" y="157" textAnchor="middle" fill="#fff" fontSize="92" fontWeight="900">P</text>
+    </SvgFrame>
+  );
+}
+
+function NoOvertakingSign() {
+  return (
+    <SvgFrame label="No overtaking sign">
+      <rect x="314" y="205" width="12" height="115" fill="#475569" />
+      <circle cx="320" cy="125" r="82" fill="#fff" stroke="#dc2626" strokeWidth="14" />
+      <rect x="260" y="105" width="48" height="62" rx="9" fill="#111827" />
+      <rect x="332" y="105" width="48" height="62" rx="9" fill="#dc2626" />
+      <circle cx="272" cy="169" r="8" fill="#111827" /><circle cx="296" cy="169" r="8" fill="#111827" />
+      <circle cx="344" cy="169" r="8" fill="#111827" /><circle cx="368" cy="169" r="8" fill="#111827" />
+    </SvgFrame>
+  );
+}
+
+function ChevronBoard() {
+  return (
+    <SvgFrame label="Chevron alignment board">
+      <rect x="105" y="78" width="430" height="150" rx="8" fill="#facc15" stroke="#111827" strokeWidth="8" />
+      {[145, 245, 345, 445].map((x) => <path key={x} d={`M${x} 100 L${x + 55} 153 L${x} 206`} stroke="#111827" strokeWidth="28" fill="none" />)}
+    </SvgFrame>
+  );
+}
+
+function HazardMarkerBoard() {
+  return (
+    <SvgFrame label="Hazard marker board">
+      <rect x="190" y="50" width="260" height="220" fill="#facc15" stroke="#111827" strokeWidth="8" />
+      {[-20, 60, 140, 220, 300, 380].map((x) => <path key={x} d={`M${x + 190} 270 L${x + 330} 50`} stroke="#111827" strokeWidth="34" />)}
     </SvgFrame>
   );
 }
@@ -483,6 +529,31 @@ function GuidanceSign() {
 
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
+
+  const fallbackVisuals = {
+    fallback_warning_shape: <WarningOverview />,
+    fallback_regulatory_shape: <RegulatoryOverviewSign />,
+    fallback_guidance: <GuidanceSign />,
+    fallback_solid_line: <RoadMarking kind="solid" />,
+    fallback_broken_line: <RoadMarking />,
+    fallback_yellow_edge: <RoadMarking kind="edge" />,
+    fallback_stop_line: <RoadMarking kind="stop" />,
+    fallback_chevron: <ChevronBoard />,
+    fallback_children: <ChildrenWarning />,
+    fallback_slippery: <SlipperyRoadWarning />,
+    fallback_narrows: <RoadNarrowsWarning />,
+    fallback_circle: <TrafficCircleSign />,
+    fallback_railway: <RailwayWarning />,
+    fallback_no_overtaking: <NoOvertakingSign />,
+    fallback_no_parking: <NoParkingSign />,
+    fallback_one_way: <OneWaySign />,
+    fallback_lane_arrow: <RoadMarking kind="arrow" />,
+    fallback_crossing: <RoadMarking kind="crossing" />,
+    fallback_roadworks: <RoadworksSign />,
+    fallback_hazard_marker: <HazardMarkerBoard />,
+  };
+
+  if (fallbackVisuals[visualAssetId]) return fallbackVisuals[visualAssetId];
 
   // RM14 bicycle-lane questions need a dedicated road marking instead of the
   // generic centre-line fallback used by other road-marking questions.
