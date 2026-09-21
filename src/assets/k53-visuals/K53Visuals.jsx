@@ -479,6 +479,14 @@ function VehicleControl({ kind = "steering" }) {
         <rect x="292" y="95" width="55" height="125" rx="12" fill="#94a3b8" />
         <rect x="404" y="132" width="55" height="88" rx="12" fill="#94a3b8" />
       </>}
+      {kind === "brake" && <>
+        <rect x="175" y="105" width="82" height="140" rx="14" fill="#64748b" stroke="#cbd5e1" strokeWidth="5" />
+        <rect x="279" y="82" width="82" height="163" rx="14" fill="#dc2626" stroke="#ffffff" strokeWidth="7" />
+        <rect x="383" y="120" width="82" height="125" rx="14" fill="#64748b" stroke="#cbd5e1" strokeWidth="5" />
+        <text x="216" y="282" textAnchor="middle" fill="#cbd5e1" fontSize="18" fontWeight="800">CLUTCH</text>
+        <text x="320" y="282" textAnchor="middle" fill="#ffffff" fontSize="20" fontWeight="900">BRAKE</text>
+        <text x="424" y="282" textAnchor="middle" fill="#cbd5e1" fontSize="18" fontWeight="800">ACCELERATOR</text>
+      </>}
       {kind === "gear" && <>
         <line x1="320" y1="215" x2="320" y2="110" stroke="#cbd5e1" strokeWidth="16" strokeLinecap="round" />
         <circle cx="320" cy="90" r="34" fill="#cbd5e1" />
@@ -556,6 +564,99 @@ function DistanceGuidanceSign() {
   );
 }
 
+function ScreenshotReferenceVisual({ kind }) {
+  return (
+    <SvgFrame label="K53 reference illustration">
+      {kind === 1 && <>
+        <rect width="640" height="320" fill="#dbeafe" />
+        <rect x="170" y="55" width="120" height="120" rx="24" fill="#dc2626" stroke="#ffffff" strokeWidth="7" />
+        <text x="230" y="130" textAnchor="middle" fill="#ffffff" fontSize="35" fontWeight="900">STOP</text>
+        <rect x="350" y="55" width="120" height="120" rx="24" fill="#facc15" stroke="#111827" strokeWidth="7" />
+        <text x="410" y="130" textAnchor="middle" fill="#111827" fontSize="35" fontWeight="900">GO</text>
+        <line x1="230" y1="175" x2="230" y2="285" stroke="#475569" strokeWidth="12" />
+        <line x1="410" y1="175" x2="410" y2="285" stroke="#475569" strokeWidth="12" />
+      </>}
+      {kind === 2 && <>
+        <rect width="640" height="320" fill="#86b86b" />
+        <path d="M0 265 C150 120 275 100 640 55 L640 225 C360 245 190 275 80 320 Z" fill="#4b5563" />
+        <path d="M25 270 C170 135 310 120 620 75" fill="none" stroke="#ffffff" strokeWidth="7" strokeDasharray="28 20" />
+        <rect x="70" y="205" width="85" height="55" rx="10" fill="#2563eb" />
+        <path d="M170 70 L485 248" stroke="#dc2626" strokeWidth="18" />
+        <text x="320" y="42" textAnchor="middle" fill="#111827" fontSize="24" fontWeight="900">NO OVERTAKING AT A BLIND BEND</text>
+      </>}
+      {kind === 3 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="125" y="125" width="300" height="105" rx="22" fill="#2563eb" />
+        <circle cx="190" cy="230" r="32" fill="#111827" /><circle cx="360" cy="230" r="32" fill="#111827" />
+        <circle cx="486" cy="105" r="42" fill="#ffffff" stroke="#dc2626" strokeWidth="8" />
+        <path d="M486 84 L486 126 M466 105 L506 105" stroke="#111827" strokeWidth="8" />
+        <path d="M452 71 L520 139" stroke="#dc2626" strokeWidth="10" />
+        <text x="320" y="285" textAnchor="middle" fill="#111827" fontSize="23" fontWeight="900">ENGINE OFF · VEHICLE SECURED</text>
+      </>}
+      {kind === 4 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="110" y="130" width="310" height="100" rx="18" fill="#0f766e" />
+        <rect x="340" y="85" width="125" height="145" rx="16" fill="#0f766e" />
+        <circle cx="190" cy="235" r="34" fill="#111827" /><circle cx="390" cy="235" r="34" fill="#111827" />
+        <path d="M470 118 Q535 145 470 172 M485 95 Q585 145 485 195" fill="none" stroke="#f59e0b" strokeWidth="12" strokeLinecap="round" />
+        <path d="M445 62 L580 220" stroke="#dc2626" strokeWidth="18" />
+        <text x="320" y="290" textAnchor="middle" fill="#111827" fontSize="23" fontWeight="900">NO EXCESSIVE AVOIDABLE NOISE</text>
+      </>}
+      {kind === 5 && <>
+        <rect width="640" height="320" fill="#0f172a" />
+        <rect x="65" y="225" width="130" height="50" rx="12" fill="#2563eb" />
+        <path d="M195 235 L570 75 L570 205 Z" fill="#fef3c7" opacity="0.8" />
+        <path d="M195 245 L390 165 L390 225 Z" fill="#bfdbfe" opacity="0.9" />
+        <text x="480" y="62" textAnchor="middle" fill="#ffffff" fontSize="25" fontWeight="900">MAIN BEAM · 100 m</text>
+        <text x="430" y="270" textAnchor="middle" fill="#ffffff" fontSize="25" fontWeight="900">DIPPED · 45 m</text>
+      </>}
+      {kind === 6 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="225" y="35" width="190" height="250" rx="14" fill="#1676a9" stroke="#ffffff" strokeWidth="8" />
+        <path d="M275 215 L370 160" stroke="#ffffff" strokeWidth="23" />
+        <text x="320" y="110" textAnchor="middle" fill="#ffffff" fontSize="38" fontWeight="900">100 m</text>
+      </>}
+      {kind === 7 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="80" y="55" width="480" height="210" rx="16" fill="#1676a9" stroke="#ffffff" strokeWidth="8" />
+        <text x="125" y="122" fill="#ffffff" fontSize="31" fontWeight="900">N3  Ⓣ  TOLL ROUTE</text>
+        <line x1="110" y1="150" x2="530" y2="150" stroke="#ffffff" strokeWidth="4" />
+        <text x="125" y="215" fill="#ffffff" fontSize="29" fontWeight="900">R103  Ⓐ  ALTERNATIVE</text>
+      </>}
+      {kind === 8 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="230" y="30" width="180" height="260" rx="16" fill="#1676a9" stroke="#ffffff" strokeWidth="8" />
+        <circle cx="290" cy="125" r="35" fill="none" stroke="#ffffff" strokeWidth="8" />
+        <circle cx="360" cy="125" r="35" fill="none" stroke="#ffffff" strokeWidth="8" />
+        <path d="M290 125 L320 82 L350 125 M318 82 L366 82" fill="none" stroke="#ffffff" strokeWidth="9" strokeLinecap="round" />
+        <text x="320" y="248" textAnchor="middle" fill="#ffffff" fontSize="78" fontWeight="900">R</text>
+      </>}
+      {kind === 9 && <>
+        <rect width="640" height="320" fill="#050505" />
+        <path d="M320 55 L320 230 M250 165 L320 235 L390 165" fill="none" stroke="#10b981" strokeWidth="34" strokeLinecap="square" strokeLinejoin="miter" />
+        <text x="320" y="292" textAnchor="middle" fill="#ffffff" fontSize="24" fontWeight="900">LANE OPEN</text>
+      </>}
+      {kind === 10 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <circle cx="220" cy="112" r="72" fill="#ffffff" stroke="#dc2626" strokeWidth="10" />
+        <text x="220" y="132" textAnchor="middle" fill="#111827" fontSize="55" fontWeight="900">60</text>
+        <polygon points="420,40 510,205 330,205" fill="#ffffff" stroke="#dc2626" strokeWidth="10" />
+        <rect x="390" y="125" width="62" height="35" rx="8" fill="#111827" />
+        <path d="M320 225 Q420 180 520 225 M300 255 Q420 205 540 255" fill="none" stroke="#94a3b8" strokeWidth="11" opacity="0.8" />
+        <text x="320" y="300" textAnchor="middle" fill="#111827" fontSize="22" fontWeight="900">POOR VISIBILITY · MAXIMUM 60 km/h</text>
+      </>}
+      {kind === 11 && <>
+        <rect width="640" height="320" fill="#e2e8f0" />
+        <rect x="190" y="20" width="260" height="280" rx="12" fill="#ffffff" stroke="#111827" strokeWidth="6" />
+        <circle cx="320" cy="125" r="78" fill="#2563eb" />
+        <text x="320" y="148" textAnchor="middle" fill="#ffffff" fontSize="65" fontWeight="900">50</text>
+        <line x1="220" y1="218" x2="420" y2="218" stroke="#111827" strokeWidth="5" />
+        <text x="320" y="270" textAnchor="middle" fill="#111827" fontSize="33" fontWeight="900">FOR 6 km</text>
+      </>}
+    </SvgFrame>
+  );
+}
+
 function KeepLeftRoadScene() {
   return (
     <SvgFrame label="Keep left on a two-way road">
@@ -581,8 +682,17 @@ function KeepLeftRoadScene() {
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
 
+  const screenshotReferenceMatch = String(visualAssetId).match(/^screenshot_reference_(\d+)$/);
+  if (screenshotReferenceMatch) {
+    return <ScreenshotReferenceVisual kind={Number(screenshotReferenceMatch[1])} />;
+  }
+
   if (q.includes("distance information") && q.includes("guidance sign")) {
     return <DistanceGuidanceSign />;
+  }
+
+  if (q.includes("slow or stop a light motor vehicle")) {
+    return <VehicleControl kind="brake" />;
   }
 
   const fallbackVisuals = {

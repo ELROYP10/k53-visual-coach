@@ -19,6 +19,21 @@ function scenario(type){
 }
 
 const R='Rules of the Road',S='Road Traffic Signs',C='Vehicle Controls';
+
+const SCREENSHOT_REFERENCE_BANK = [
+  [R, 'When an authorised traffic officer or temporary road controller displays a portable STOP/GO sign, what must you do?', ['Obey the displayed STOP or GO instruction', 'Follow the traffic light instead', 'Treat it as advice only', 'Proceed whenever the road looks clear'], 0, 'Directions given by an authorised person or temporary traffic control must be obeyed.'],
+  [R, 'May you overtake when approaching a blind bend where the road ahead is not clearly visible?', ['No, overtaking is unsafe and prohibited there', 'Yes, if you briefly see no traffic', 'Yes, if you sound the horn', 'Yes, when the vehicle ahead is slow'], 0, 'Do not overtake where insufficient sight distance prevents you from confirming that the manoeuvre is safe.'],
+  [R, 'What should you do before leaving a motor vehicle unattended?', ['Switch off the engine and secure the vehicle', 'Leave the engine running', 'Leave the key in the ignition', 'Release the parking brake'], 0, 'An unattended vehicle should have its engine switched off and be secured against unintended movement or unauthorised use.'],
+  [R, 'May a vehicle be operated on a public road in a way that causes excessive avoidable noise?', ['No', 'Yes, but only during the day', 'Yes, outside towns', 'Yes, if the vehicle is heavy'], 0, 'A vehicle may not be used in a manner that causes excessive avoidable noise.'],
+  [R, 'How far ahead should a vehicle’s main beams and dipped beams be capable of illuminating the road?', ['Main beams: 100 m; dipped beams: 45 m', 'Main beams: 60 m; dipped beams: 30 m', 'Main beams: 80 m; dipped beams: 40 m', 'Main beams: 45 m; dipped beams: 15 m'], 0, 'The prescribed K53 values are 100 metres for main beams and 45 metres for dipped beams.'],
+  [S, 'A high-speed exit countdown marker with one diagonal bar indicates that the exit is approximately how far ahead?', ['100 metres', '10 metres', '500 metres', '1 kilometre'], 0, 'The single-bar high-speed exit countdown marker indicates approximately 100 metres to the exit.'],
+  [S, 'What does a direction sign showing both a toll route and another route indicate?', ['A toll route and an alternative non-toll route', 'The toll amount payable', 'That every route ahead is tolled', 'A compulsory fuel stop'], 0, 'The sign identifies the toll route and an available alternative route.'],
+  [S, 'What does a blue reserved-lane sign showing a motorcycle indicate?', ['Motorcycles must use the indicated part of the road', 'Motorcycles may park there', 'Motorcycles have right of way everywhere', 'Motorcycles are prohibited'], 0, 'The reserved-lane sign directs the indicated class of road user to use that part of the road.'],
+  [S, 'What does a green downward arrow displayed above a traffic lane mean?', ['The lane is open and may be used', 'Leave the lane immediately', 'The lane is for emergency vehicles only', 'Stop in the lane'], 0, 'A green downward lane-control arrow indicates that the lane is open to traffic.'],
+  [S, 'What does a combined sign showing a 60 km/h limit with a poor-visibility warning require?', ['Do not exceed 60 km/h when the indicated poor-visibility condition applies', 'Always drive at exactly 60 km/h', 'The sign is only a recommendation', 'Increase speed to clear the area'], 0, 'The combined sign applies the displayed speed restriction when the indicated condition applies.'],
+  [S, 'A minimum-speed sign showing 50 with a supplementary plate reading “For 6 km” means:', ['Maintain at least 50 km/h for the next 6 km when conditions permit', 'Do not exceed 50 km/h for 6 km', 'A speed of 50 km/h is recommended', 'The destination is 6 km away'], 0, 'The sign applies a minimum speed of 50 km/h over the distance shown, subject to safe conditions.'],
+];
+
 const LICENCE_CONTROL_BANKS = {
   CODE_1: [
     ["Which control on a motorcycle is normally operated by the right hand to increase engine speed?", ["Throttle", "Clutch lever", "Rear-brake pedal", "Gear-change lever"], 0, "The throttle is normally operated by the right hand and controls engine speed."],
@@ -153,7 +168,7 @@ function shuffle(array) {
 
 function prepareQuestions() {
   return shuffle(
-    QUESTION_BANK.map((sourceQ, id) => {
+    [...QUESTION_BANK, ...SCREENSHOT_REFERENCE_BANK].map((sourceQ, id) => {
       const options = [...sourceQ[2]];
       const correctText = options[sourceQ[3]];
       const shuffledOptions = shuffle(options);
@@ -180,6 +195,10 @@ function prepareQuestions() {
         "A hazard-marker board is used to:": ["fallback_hazard_marker", "hazard_sign"],
       };
       const fallbackVisual = fallbackVisualMap[sourceQ[1]];
+      const screenshotReferenceIndex = id - QUESTION_BANK.length;
+      const screenshotVisualId = screenshotReferenceIndex >= 0
+        ? `screenshot_reference_${screenshotReferenceIndex + 1}`
+        : null;
       return {
         id,
         section: sourceQ[0],
@@ -189,11 +208,31 @@ function prepareQuestions() {
         explanation: sourceQ[4],
         sign: sourceQ[5] || null,
         scenario: sourceQ[6] || null,
-        visualAssetId: fallbackVisual?.[0] || null,
-        visualType: fallbackVisual?.[1] || null,
+        visualAssetId: fallbackVisual?.[0] || screenshotVisualId,
+        visualType: fallbackVisual?.[1] || (screenshotVisualId ? (sourceQ[0] === S ? 'regulatory_sign' : 'road_scene') : null),
       };
     })
   );
+}
+
+function prepareScreenshotReferenceQuestions() {
+  return SCREENSHOT_REFERENCE_BANK.map((sourceQ, index) => {
+    const options = [...sourceQ[2]];
+    const correctText = options[sourceQ[3]];
+    const shuffledOptions = shuffle(options);
+    return {
+      id: `SCREENSHOT-${String(index + 1).padStart(2, '0')}`,
+      section: sourceQ[0],
+      question: sourceQ[1],
+      options: shuffledOptions,
+      correct: shuffledOptions.indexOf(correctText),
+      explanation: sourceQ[4],
+      sign: null,
+      scenario: null,
+      visualAssetId: `screenshot_reference_${index + 1}`,
+      visualType: sourceQ[0] === S ? 'regulatory_sign' : 'road_scene',
+    };
+  });
 }
 
 function formatTime(totalSeconds) {
@@ -273,7 +312,15 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
       // A successful query can still return no rows (for example because of
       // an RLS policy). Use the reviewed built-in bank instead of presenting a
       // dead-end "Question bank unavailable" screen.
-      setQuestionBank(converted.length ? converted : prepareQuestions());
+      if (converted.length) {
+        const existingQuestions = new Set(converted.map((question) => question.question.trim().toLowerCase()));
+        const supplemental = prepareScreenshotReferenceQuestions().filter(
+          (question) => !existingQuestions.has(question.question.trim().toLowerCase())
+        );
+        setQuestionBank([...converted, ...supplemental]);
+      } else {
+        setQuestionBank(prepareQuestions());
+      }
       setQuestionsLoading(false);
     };
 
