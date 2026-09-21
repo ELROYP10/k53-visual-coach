@@ -539,6 +539,28 @@ function GuidanceSign() {
   );
 }
 
+function KeepLeftRoadScene() {
+  return (
+    <SvgFrame label="Keep left on a two-way road">
+      <rect width="640" height="320" fill="#86b86b" />
+      <rect x="125" width="390" height="320" fill="#4b5563" />
+      <line x1="320" y1="0" x2="320" y2="320" stroke="#ffffff" strokeWidth="7" strokeDasharray="26 18" />
+      <line x1="145" y1="0" x2="145" y2="320" stroke="#facc15" strokeWidth="8" />
+      <line x1="495" y1="0" x2="495" y2="320" stroke="#facc15" strokeWidth="8" />
+      <rect x="205" y="175" width="74" height="112" rx="13" fill="#2563eb" stroke="#ffffff" strokeWidth="4" />
+      <rect x="219" y="192" width="46" height="30" rx="5" fill="#bfdbfe" />
+      <circle cx="205" cy="205" r="8" fill="#111827" />
+      <circle cx="279" cy="205" r="8" fill="#111827" />
+      <circle cx="205" cy="264" r="8" fill="#111827" />
+      <circle cx="279" cy="264" r="8" fill="#111827" />
+      <path d="M242 155 L242 92 M220 116 L242 92 L264 116" fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="242" y="55" textAnchor="middle" fill="#ffffff" fontSize="20" fontWeight="900">KEEP LEFT</text>
+      <rect x="372" y="38" width="74" height="112" rx="13" fill="#dc2626" stroke="#ffffff" strokeWidth="4" />
+      <path d="M409 165 L409 225 M387 201 L409 225 L431 201" fill="none" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+    </SvgFrame>
+  );
+}
+
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
 
@@ -566,6 +588,10 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   };
 
   if (fallbackVisuals[visualAssetId]) return fallbackVisuals[visualAssetId];
+
+  if (q.includes("normal two-way road") && q.includes("which side")) {
+    return <KeepLeftRoadScene />;
+  }
 
   // RM14 bicycle-lane questions need a dedicated road marking instead of the
   // generic centre-line fallback used by other road-marking questions.
@@ -679,7 +705,7 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
     return <SpeedSign speed={speed} />;
   }
   if (q.includes("traffic circle") || q.includes("roundabout")) return <TrafficCircleSign />;
-  if (q.includes("pedestrian") && (visualType.includes("sign") || q.includes("sign"))) return <PedestrianSign />;
+  if (q.includes("pedestrian") && ((visualType || "").includes("sign") || q.includes("sign"))) return <PedestrianSign />;
   if (q.includes("road works") || q.includes("roadworks") || q.includes("grader working")) return <RoadworksSign />;
 
   if (visualType === "traffic_signal") {
@@ -718,8 +744,6 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
 }
 
 export default function K53Visual({ visualAssetId, visualType, questionText }) {
-  if (!visualType || visualType === "none") return null;
-
   const visual = inferVisual(questionText, visualType, visualAssetId);
   if (!visual) return null;
 
