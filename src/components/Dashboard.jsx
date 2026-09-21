@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import StudyCoach from "./StudyCoach";
 
 const XP_PER_LEVEL = 500;
 
@@ -247,6 +248,11 @@ export default function Dashboard({
     const tied = scores.filter((item) => item.value === lowestValue);
 
     return tied[0]?.label ?? null;
+  }, [latest, rules, signs, controls]);
+
+  const weakestScore = useMemo(() => {
+    if (!latest) return 0;
+    return Math.min(rules, signs, controls);
   }, [latest, rules, signs, controls]);
 
   const formatCompletedAt = (value) => {
@@ -508,6 +514,24 @@ export default function Dashboard({
         .actions-card {
           padding: 28px;
         }
+
+        .study-coach { display:grid; gap:14px; }
+        .coach-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+        .coach-heading h2 { margin:0; color:#f5fff9; font-size:1.35rem; }
+        .coach-status { display:inline-flex; align-items:center; gap:6px; padding:6px 9px; border:1px solid rgba(96,165,250,.25); border-radius:999px; background:rgba(30,64,175,.13); color:#bfdbfe; font-size:.65rem; font-weight:800; text-transform:uppercase; }
+        .coach-status span { width:7px; height:7px; border-radius:50%; background:#60a5fa; box-shadow:0 0 9px #60a5fa; }
+        .coach-focus { display:grid; grid-template-columns:auto minmax(0,1fr); gap:12px; padding:14px; border:1px solid rgba(110,216,172,.22); border-radius:15px; background:rgba(18,54,44,.75); }
+        .coach-icon { font-size:1.7rem; }
+        .coach-focus strong { display:block; color:#f0fdf4; font-size:.93rem; line-height:1.4; }
+        .coach-focus p { margin:6px 0 0; color:#b9d9cc; font-size:.78rem; line-height:1.45; }
+        .coach-tip { padding:11px 13px; border-left:3px solid #facc15; border-radius:0 11px 11px 0; background:rgba(250,204,21,.07); }
+        .coach-tip span { color:#fef08a; font-size:.61rem; font-weight:900; letter-spacing:.1em; }
+        .coach-tip p { margin:4px 0 0; color:#dbe9e3; font-size:.75rem; line-height:1.4; }
+        .coach-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .coach-actions button { min-height:42px; padding:9px 10px; border-radius:11px; font-size:.76rem; font-weight:850; cursor:pointer; }
+        .coach-primary { border:0; background:linear-gradient(135deg,#3ac18b,#1d8d63); color:#f6fff9; }
+        .coach-secondary { border:1px solid rgba(136,217,176,.25); background:rgba(146,222,183,.08); color:#eafcef; }
+        .coach-loading { margin:0; color:#b9d9cc; }
 
         .actions-grid {
           display: flex;
@@ -798,6 +822,15 @@ export default function Dashboard({
           .content-column { min-height:0; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,.85fr); grid-template-rows:minmax(0,1.15fr) minmax(0,.85fr); gap:12px; }
           .readiness-card { grid-column:1; grid-row:1; padding:16px; min-height:0; }
           .actions-card { grid-column:2; grid-row:1; padding:16px; min-height:0; }
+          .actions-card { overflow:auto; }
+          .study-coach { gap:9px; }
+          .coach-heading h2 { font-size:1.05rem; }
+          .coach-focus { padding:10px; gap:8px; }
+          .coach-icon { font-size:1.3rem; }
+          .coach-focus strong { font-size:.78rem; }
+          .coach-focus p,.coach-tip p { font-size:.68rem; }
+          .coach-tip { padding:8px 10px; }
+          .coach-actions button { min-height:36px; padding:7px; font-size:.68rem; }
           .content-column > .history-card:nth-of-type(3) { grid-column:2; grid-row:2; padding:14px 16px; min-height:0; overflow:hidden; }
           .content-column > .history-card:nth-of-type(4) { grid-column:1; grid-row:2; padding:14px 16px; min-height:0; overflow:hidden; }
           .section-label { margin-bottom:9px; font-size:.66rem; }
@@ -1039,30 +1072,17 @@ export default function Dashboard({
               </section>
 
               <section className="panel actions-card">
-                <p className="section-label">Quick Actions</p>
-
-                <div className="actions-grid">
-                  <button type="button" className="primary-action" onClick={onStartTest}>
-                    Start Mock Test
-                  </button>
-
-                  <button
-                    type="button"
-                    className="secondary-action"
-                    onClick={() => onPracticeWeakAreas(practiceWeakestArea)}
-                  >
-                    Practice Weak Areas
-                  </button>
-                </div>
-
-                <div className="weakest-area">
-                  <span className="section-label" style={{ marginBottom: 0 }}>
-                    Weakest Area
-                  </span>
-                  <strong>
-                    {loading ? "Loading..." : error ? "Unavailable" : latest ? weakestArea : "No tests yet"}
-                  </strong>
-                </div>
+                <StudyCoach
+                  loading={loading || mistakeProgressLoading}
+                  testsCompleted={testsCompleted}
+                  readiness={readiness}
+                  weakestArea={weakestArea}
+                  weakestScore={weakestScore}
+                  streak={gamification.streak}
+                  latestMistakePercentage={latestMistakePercentage}
+                  onStartTest={onStartTest}
+                  onPracticeWeakAreas={() => onPracticeWeakAreas(practiceWeakestArea)}
+                />
               </section>
 
               <section className="panel history-card">
