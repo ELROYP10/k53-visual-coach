@@ -1,6 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const XP_PER_LEVEL = 500;
+
+const toSouthAfricanDay = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat("en-ZA", {
+    timeZone: "Africa/Johannesburg",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const read = (type) => Number(parts.find((part) => part.type === type)?.value);
+  return Date.UTC(read("year"), read("month") - 1, read("day"));
+};
+
+const calculateStreak = (activityDates) => {
+  const days = new Set(activityDates.map(toSouthAfricanDay).filter(Number.isFinite));
+  if (days.size === 0) return 0;
+
+  const today = toSouthAfricanDay(new Date());
+  const oneDay = 24 * 60 * 60 * 1000;
+  let cursor = days.has(today) ? today : today - oneDay;
+  if (!days.has(cursor)) return 0;
+
+  let streak = 0;
+  while (days.has(cursor)) {
+    streak += 1;
+    cursor -= oneDay;
+  }
+  return streak;
+};
+
 export default function Dashboard({
   user,
   onStartTest = () => {},
@@ -154,6 +187,33 @@ export default function Dashboard({
       : latestMistakeProgress?.improved
         ? "Improved"
         : "Not improved yet";
+
+  const gamification = useMemo(() => {
+    const testXp = results.reduce((sum, result) => {
+      const score = Number(result.total_score ?? 0);
+      return sum + 100 + score * 2 + (result.passed ? 50 : 0);
+    }, 0);
+    const practiceXp = mistakeProgress.reduce((sum, session) => {
+      return sum + 40 + Number(session.correct_answers ?? 0) * 3;
+    }, 0);
+    const xp = testXp + practiceXp;
+    const level = Math.floor(xp / XP_PER_LEVEL) + 1;
+    const levelXp = xp % XP_PER_LEVEL;
+    const streak = calculateStreak([
+      ...results.map((result) => result.completed_at),
+      ...mistakeProgress.map((session) => session.completed_at),
+    ]);
+    const badges = [
+      { id: "first-test", icon: "🏁", name: "First Test", detail: "Complete your first mock test", earned: results.length >= 1 },
+      { id: "passed", icon: "🏆", name: "Road Ready", detail: "Pass a full mock test", earned: results.some((result) => result.passed) },
+      { id: "signs", icon: "🚦", name: "Sign Spotter", detail: "Score at least 24/28 for signs", earned: results.some((result) => Number(result.signs_score) >= 24) },
+      { id: "controls", icon: "🚘", name: "Control Master", detail: "Score 8/8 for vehicle controls", earned: results.some((result) => Number(result.controls_score) >= 8) },
+      { id: "comeback", icon: "📈", name: "Comeback", detail: "Improve in mistake practice", earned: mistakeProgress.some((session) => session.improved) },
+      { id: "streak", icon: "🔥", name: "3-Day Streak", detail: "Practise on three consecutive days", earned: streak >= 3 },
+    ];
+
+    return { xp, level, levelXp, streak, badges };
+  }, [results, mistakeProgress]);
 
   const weakestArea = useMemo(() => {
     if (!latest) return "No completed tests yet";
@@ -319,6 +379,19 @@ export default function Dashboard({
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 14px;
         }
+
+        .game-level-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+        .game-level { display:inline-flex; align-items:center; gap:7px; padding:7px 10px; border-radius:999px; background:rgba(250,204,21,.12); border:1px solid rgba(250,204,21,.3); color:#fef08a; font-size:.78rem; font-weight:900; }
+        .game-xp-total { color:#86efac; font-size:.78rem; font-weight:800; }
+        .game-progress { display:grid; gap:7px; }
+        .game-progress-copy { display:flex; justify-content:space-between; gap:12px; color:#a7c9c0; font-size:.72rem; }
+        .game-progress-bar { height:8px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.08); }
+        .game-progress-fill { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#facc15,#4ade80); }
+        .badge-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+        .achievement-badge { min-width:0; padding:9px 5px; border:1px solid rgba(134,239,172,.2); border-radius:12px; background:rgba(34,197,94,.08); text-align:center; }
+        .achievement-badge.locked { filter:grayscale(1); opacity:.34; }
+        .achievement-icon { display:block; margin-bottom:4px; font-size:1.25rem; }
+        .achievement-name { display:block; overflow:hidden; color:#dcfce7; font-size:.62rem; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
 
         .meta-box {
           background: rgba(255, 255, 255, 0.02);
@@ -718,6 +791,10 @@ export default function Dashboard({
           .meta-box { padding:9px 10px; }
           .meta-label { margin-bottom:4px; font-size:.64rem; }
           .meta-value { font-size:.95rem; }
+          .badge-grid { gap:6px; }
+          .achievement-badge { padding:6px 3px; }
+          .achievement-icon { margin-bottom:2px; font-size:1.05rem; }
+          .achievement-name { font-size:.55rem; }
           .content-column { min-height:0; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,.85fr); grid-template-rows:minmax(0,1.15fr) minmax(0,.85fr); gap:12px; }
           .readiness-card { grid-column:1; grid-row:1; padding:16px; min-height:0; }
           .actions-card { grid-column:2; grid-row:1; padding:16px; min-height:0; }
@@ -851,6 +928,21 @@ export default function Dashboard({
 
               <p className="profile-email">{email}</p>
 
+              <div className="game-level-row">
+                <span className="game-level">⭐ Level {gamification.level}</span>
+                <span className="game-xp-total">{gamification.xp.toLocaleString("en-ZA")} XP</span>
+              </div>
+
+              <div className="game-progress" aria-label={`${gamification.levelXp} of ${XP_PER_LEVEL} XP toward next level`}>
+                <div className="game-progress-copy">
+                  <span>Next level</span>
+                  <span>{gamification.levelXp}/{XP_PER_LEVEL} XP</span>
+                </div>
+                <div className="game-progress-bar">
+                  <span className="game-progress-fill" style={{ width: `${(gamification.levelXp / XP_PER_LEVEL) * 100}%` }} />
+                </div>
+              </div>
+
               <div className="profile-meta">
                 <div className="meta-box">
                   <span className="meta-label">Tests</span>
@@ -860,10 +952,27 @@ export default function Dashboard({
                 </div>
 
                 <div className="meta-box">
-                  <span className="meta-label">Weakest</span>
+                  <span className="meta-label">Daily streak</span>
                   <span className="meta-value">
-                    {loading ? "..." : weakestArea}
+                    {loading || mistakeProgressLoading ? "..." : `🔥 ${gamification.streak} day${gamification.streak === 1 ? "" : "s"}`}
                   </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="section-label" style={{ marginBottom: 9 }}>Achievement Badges</p>
+                <div className="badge-grid">
+                  {gamification.badges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className={`achievement-badge${badge.earned ? "" : " locked"}`}
+                      title={`${badge.name}: ${badge.detail}${badge.earned ? " — Unlocked" : " — Locked"}`}
+                      aria-label={`${badge.name}, ${badge.earned ? "unlocked" : "locked"}`}
+                    >
+                      <span className="achievement-icon">{badge.earned ? badge.icon : "🔒"}</span>
+                      <span className="achievement-name">{badge.name}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </aside>
