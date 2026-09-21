@@ -218,7 +218,9 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
       if (!active) return;
 
       if (error) {
-        setQuestionsError(error.message || "Unable to load the K53 question bank.");
+        // Keep the public practice test available during a transient database
+        // failure or when anonymous read access is unavailable.
+        setQuestionBank(prepareQuestions());
         setQuestionsLoading(false);
         return;
       }
@@ -243,7 +245,10 @@ function K53Test({ onExit, focusCategory = null, focusMistakes = [], licenceCode
         };
       });
 
-      setQuestionBank(converted);
+      // A successful query can still return no rows (for example because of
+      // an RLS policy). Use the reviewed built-in bank instead of presenting a
+      // dead-end "Question bank unavailable" screen.
+      setQuestionBank(converted.length ? converted : prepareQuestions());
       setQuestionsLoading(false);
     };
 
