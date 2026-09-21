@@ -539,6 +539,23 @@ function GuidanceSign() {
   );
 }
 
+function DistanceGuidanceSign() {
+  return (
+    <SvgFrame label="Guidance sign showing destinations and distances">
+      <rect x="314" y="250" width="12" height="70" fill="#475569" />
+      <rect x="125" y="28" width="390" height="232" rx="12" fill="#167047" stroke="#ffffff" strokeWidth="8" />
+      <text x="158" y="82" fill="#ffffff" fontSize="28" fontWeight="800">PRETORIA</text>
+      <text x="477" y="82" textAnchor="end" fill="#ffffff" fontSize="28" fontWeight="800">58</text>
+      <line x1="150" y1="104" x2="490" y2="104" stroke="#ffffff" strokeWidth="3" opacity="0.85" />
+      <text x="158" y="151" fill="#ffffff" fontSize="28" fontWeight="800">MIDRAND</text>
+      <text x="477" y="151" textAnchor="end" fill="#ffffff" fontSize="28" fontWeight="800">24</text>
+      <line x1="150" y1="173" x2="490" y2="173" stroke="#ffffff" strokeWidth="3" opacity="0.85" />
+      <text x="158" y="222" fill="#ffffff" fontSize="28" fontWeight="800">NEXT EXIT</text>
+      <text x="477" y="222" textAnchor="end" fill="#ffffff" fontSize="28" fontWeight="800">2 km</text>
+    </SvgFrame>
+  );
+}
+
 function KeepLeftRoadScene() {
   return (
     <SvgFrame label="Keep left on a two-way road">
@@ -563,6 +580,10 @@ function KeepLeftRoadScene() {
 
 function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   const q = questionText.toLowerCase();
+
+  if (q.includes("distance information") && q.includes("guidance sign")) {
+    return <DistanceGuidanceSign />;
+  }
 
   const fallbackVisuals = {
     fallback_warning_shape: <WarningOverview />,
