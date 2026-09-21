@@ -496,7 +496,19 @@ function RoadScene({ kind = "intersection" }) {
   return (
     <SvgFrame label="Road scene">
       <rect width="640" height="320" fill="#86b86b" />
-      {kind === "crossing" ? <>
+      {kind === "roadsidePedestrian" ? <>
+        <rect x="150" width="490" height="320" fill="#4b5563" />
+        <line x1="395" y1="0" x2="395" y2="320" stroke="#fff" strokeWidth="5" strokeDasharray="24 18" />
+        <line x1="166" y1="0" x2="166" y2="320" stroke="#facc15" strokeWidth="9" />
+        <circle cx="105" cy="102" r="15" fill="#111827" />
+        <path d="M105 120 L105 184 M105 138 L78 165 M105 138 L130 160 M105 184 L82 232 M105 184 L130 230" fill="none" stroke="#111827" strokeWidth="11" strokeLinecap="round" />
+        <path d="M95 270 L95 235 M82 248 L95 235 L108 248" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="455" y="92" width="105" height="58" rx="10" fill="#2563eb" />
+        <rect x="474" y="150" width="22" height="14" rx="4" fill="#111827" />
+        <rect x="524" y="150" width="22" height="14" rx="4" fill="#111827" />
+        <path d="M455 120 L430 120" stroke="#ffffff" strokeWidth="5" strokeDasharray="10 9" />
+        <text x="320" y="300" textAnchor="middle" fill="#ffffff" fontSize="17" fontWeight="800">Face approaching traffic</text>
+      </> : kind === "crossing" ? <>
         <rect y="85" width="640" height="150" fill="#4b5563" />
         {Array.from({ length: 8 }).map((_, i) => <rect key={i} x={190 + i * 34} y="85" width="15" height="150" fill="#fff" />)}
         <rect x="72" y="140" width="95" height="48" rx="9" fill="#2563eb" />
@@ -696,6 +708,9 @@ function inferVisual(questionText = "", visualType = "", visualAssetId = "") {
   if (visualType === "warning_sign" || visualType === "hazard_sign" || visualType === "regulatory_sign") return <WarningSign />;
   if (visualType === "road_scene") {
     if (q.includes("pedestrian crossing")) return <RoadScene kind="crossing" />;
+    if (q.includes("pedestrian") && (q.includes("no pavement") || q.includes("walking along"))) {
+      return <RoadScene kind="roadsidePedestrian" />;
+    }
     return <RoadScene kind="intersection" />;
   }
 
