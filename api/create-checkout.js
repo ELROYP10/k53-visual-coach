@@ -5,11 +5,13 @@ const SITE_URL = "https://k53-visual-coach.vercel.app";
 const PLANS = Object.freeze({
   standard: {
     amount: 7900,
-    name: "K53 Visual Coach Standard",
+    name: "K53 Visual Coach Premium 30",
+    durationDays: 30,
   },
   premium: {
     amount: 12900,
-    name: "K53 Visual Coach Premium",
+    name: "K53 Visual Coach Premium 90",
+    durationDays: 90,
   },
 });
 
@@ -78,6 +80,7 @@ export default async function handler(request, response) {
             user_id: user.id,
             plan: planId,
             product: plan.name,
+            duration_days: String(plan.durationDays),
           },
         }),
       },

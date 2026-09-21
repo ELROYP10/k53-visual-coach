@@ -6,15 +6,16 @@ import Dashboard from "./components/Dashboard";
 import AccountGate from "./components/AccountGate";
 import MistakePractice from "./components/MistakePractice";
 import LegalCenter from "./components/LegalCenter";
+import Pricing from "./components/Pricing";
 import { supabase } from "./lib/supabase";
 import { trackEvent } from "./lib/analytics";
 
 const LEGAL_PAGES = ["privacy", "terms", "refunds", "contact"];
 
 const LICENCE_CATEGORIES = [
-  { code: "CODE_1", short: "Code 1", title: "Motorcycle, motor tricycle or quadrucycle", detail: "With or without a sidecar" },
-  { code: "CODE_2", short: "Code 2", title: "Motor vehicle, minibus, bus or goods vehicle", detail: "GVM not exceeding 3,500 kg" },
-  { code: "CODE_3", short: "Code 3", title: "Motor vehicle", detail: "GVM exceeding 3,500 kg" },
+  { code: "CODE_1", short: "Code 1", title: "Motorcycle", detail: "Motorcycle with or without a sidecar, motor tricycle or quadrucycle" },
+  { code: "CODE_2", short: "Code 2", title: "Motor vehicle up to 3,500 kg", detail: "Motor vehicle, minibus, bus or goods vehicle with GVM not exceeding 3,500 kg" },
+  { code: "CODE_3", short: "Code 3", title: "Motor vehicle over 3,500 kg", detail: "Motor vehicle with GVM exceeding 3,500 kg" },
 ];
 
 const getLegalPage = () => {
@@ -29,6 +30,7 @@ function App() {
     new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
   );
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
   const [focusCategory, setFocusCategory] = useState(null);
   const [focusMistakes, setFocusMistakes] = useState([]);
   const [mistakePracticeTexts, setMistakePracticeTexts] = useState([]);
@@ -230,19 +232,7 @@ function App() {
     ["standard", "premium"].includes(profile?.plan) &&
     (!profile?.premium_until || new Date(profile.premium_until).getTime() > Date.now());
 
-  const openFullAccess = async () => {
-    if (!user) {
-      setShowAuth(true);
-      setShowDashboard(false);
-      return;
-    }
-
-    if (hasPremiumAccess) {
-      setShowDashboard(true);
-      setShowAuth(false);
-      return;
-    }
-
+  const startCheckout = async (planId) => {
     if (paymentLoading) return;
 
     setPaymentLoading(true);
@@ -263,7 +253,7 @@ function App() {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ plan: "standard" }),
+        body: JSON.stringify({ plan: planId }),
       });
 
       const checkout = await checkoutResponse.json();
@@ -273,12 +263,12 @@ function App() {
       }
 
       trackEvent("begin_checkout", {
-        value: 79,
+        value: planId === "premium" ? 129 : 79,
         currency: "ZAR",
         items: [
           {
-            item_id: "standard",
-            item_name: "K53 Visual Coach Full Access",
+            item_id: planId,
+            item_name: planId === "premium" ? "K53 Premium 90" : "K53 Premium 30",
           },
         ],
       });
@@ -288,6 +278,12 @@ function App() {
       window.alert(error.message || "Unable to start checkout. Please try again.");
       setPaymentLoading(false);
     }
+  };
+
+  const openFullAccess = () => {
+    setShowPricing(true);
+    setShowDashboard(false);
+    setShowAuth(false);
   };
 
   const openLegalPage = (page) => {
@@ -323,12 +319,28 @@ if (legalPage) {
   );
 }
 
+if (showPricing) {
+  return (
+    <Pricing
+      user={user}
+      hasActiveAccess={hasPremiumAccess}
+      premiumUntil={profile?.premium_until}
+      paymentLoading={paymentLoading}
+      onChoosePlan={startCheckout}
+      onSignIn={() => {
+        setShowPricing(false);
+        setShowAuth(true);
+      }}
+      onBack={() => setShowPricing(false)}
+    />
+  );
+}
+
 if (showDashboard && user && !hasPremiumAccess) {
   return (
     <AccountGate
       user={user}
       onUpgrade={() => {
-        setShowDashboard(false);
         openFullAccess();
       }}
       onBack={() => setShowDashboard(false)}

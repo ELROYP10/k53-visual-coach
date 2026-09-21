@@ -129,14 +129,14 @@ export default function AccountGate({
         <span className="account-gate-badge">Free account</span>
         <h1 id="account-gate-title">Unlock your full learning dashboard</h1>
         <p>
-          Full Access includes saved test history, readiness analytics,
-          weak-area practice and smart mistake practice.
+          Premium includes saved test history, readiness analytics,
+          weak-area practice and smart mistake practice. Choose 30 or 90 days.
         </p>
         <p className="account-gate-email">{user?.email}</p>
 
         <div className="account-gate-actions">
           <button type="button" className="account-upgrade" onClick={onUpgrade}>
-            Unlock Full Access — R79
+            View Premium plans — from R79
           </button>
           <button type="button" className="account-back" onClick={onBack}>
             Return to home

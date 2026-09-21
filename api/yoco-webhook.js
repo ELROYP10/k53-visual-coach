@@ -104,10 +104,10 @@ export default async function handler(request, response) {
     const payment = event.payload;
     const checkoutId = payment?.metadata?.checkoutId;
     const planByAmount = {
-      7900: "standard",
-      12900: "premium",
+      7900: { id: "standard", durationDays: 30 },
+      12900: { id: "premium", durationDays: 90 },
     };
-    const plan = planByAmount[payment?.amount];
+    const selectedPlan = planByAmount[payment?.amount];
 
     if (
       payment?.mode !== "live" ||
@@ -115,7 +115,7 @@ export default async function handler(request, response) {
       payment?.currency !== "ZAR" ||
       !checkoutId ||
       !payment?.id ||
-      !plan
+      !selectedPlan
     ) {
       console.error("Rejected unexpected Yoco payment event", {
         eventId: event.id,
@@ -156,7 +156,7 @@ export default async function handler(request, response) {
     const profileResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_profiles?payment_reference=eq.${encodeURIComponent(
         checkoutId,
-      )}&select=user_id&limit=1`,
+      )}&select=user_id,premium_until&limit=1`,
       { headers: supabaseHeaders },
     );
     const profiles = await profileResponse.json();
@@ -169,6 +169,14 @@ export default async function handler(request, response) {
       return response.status(500).json({ error: "Payment profile not found" });
     }
 
+    const currentExpiry = profiles[0].premium_until
+      ? new Date(profiles[0].premium_until).getTime()
+      : 0;
+    const accessStartsAt = Math.max(Date.now(), currentExpiry);
+    const premiumUntil = new Date(
+      accessStartsAt + selectedPlan.durationDays * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     const updateResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_profiles?user_id=eq.${encodeURIComponent(
         profiles[0].user_id,
@@ -180,7 +188,8 @@ export default async function handler(request, response) {
           Prefer: "return=minimal",
         },
         body: JSON.stringify({
-          plan,
+          plan: selectedPlan.id,
+          premium_until: premiumUntil,
           payment_reference: payment.id,
           updated_at: new Date().toISOString(),
         }),
