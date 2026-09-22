@@ -7,6 +7,7 @@ import AccountGate from "./components/AccountGate";
 import MistakePractice from "./components/MistakePractice";
 import LegalCenter from "./components/LegalCenter";
 import Pricing from "./components/Pricing";
+import AdminQuestionManager from "./components/AdminQuestionManager";
 import { supabase } from "./lib/supabase";
 import { trackEvent } from "./lib/analytics";
 
@@ -31,6 +32,7 @@ function App() {
   );
   const [showDashboard, setShowDashboard] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [focusCategory, setFocusCategory] = useState(null);
   const [focusMistakes, setFocusMistakes] = useState([]);
   const [mistakePracticeTexts, setMistakePracticeTexts] = useState([]);
@@ -336,6 +338,10 @@ if (showPricing) {
   );
 }
 
+if (showAdmin && user) {
+  return <AdminQuestionManager onBack={() => { setShowAdmin(false); setShowDashboard(true); }} />;
+}
+
 if (showDashboard && user && !hasPremiumAccess) {
   return (
     <AccountGate
@@ -367,6 +373,7 @@ if (showDashboard && user && hasPremiumAccess) {
         setShowTest(false);
         setShowMistakePractice(true);
       }}
+      onOpenAdmin={() => { setShowDashboard(false); setShowAdmin(true); }}
     />
   );
 }

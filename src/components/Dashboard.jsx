@@ -42,6 +42,7 @@ export default function Dashboard({
   onStartTest = () => {},
   onPracticeWeakAreas = () => {},
   onPracticeMistakes = () => {},
+  onOpenAdmin = () => {},
 }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,13 @@ export default function Dashboard({
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
   const [dailyResults, setDailyResults] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setIsAdmin(Boolean(data)));
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -972,7 +980,8 @@ export default function Dashboard({
         <div className="dashboard-shell">
           <header className="dashboard-header">
             <h1>K53 Visual Coach</h1>
-            <div className="dashboard-header-actions">
+              <div className="dashboard-header-actions">
+              {isAdmin && <button type="button" className="logout-button" style={{ borderColor: "rgba(74,222,128,.35)", color: "#bbf7d0", background: "rgba(22,101,52,.18)" }} onClick={onOpenAdmin}>Manage Questions</button>}
               <div className="dashboard-badge">Learner Dashboard</div>
               <button type="button" className="logout-button" onClick={handleSignOut} disabled={signingOut}>
                 {signingOut ? "Logging out..." : "Log Out"}
