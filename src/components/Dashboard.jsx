@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import StudyCoach from "./StudyCoach";
 import NotificationSettings from "./NotificationSettings";
+import DailyChallenge from "./DailyChallenge";
 
 const XP_PER_LEVEL = 500;
 
@@ -54,6 +55,13 @@ export default function Dashboard({
   const [mistakeProgressError, setMistakeProgressError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const [dailyResults, setDailyResults] = useState([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("daily_challenge_results").select("correct,xp_earned,completed_at").eq("user_id", user.id).order("completed_at", { ascending: false })
+      .then(({ data }) => setDailyResults(data || []));
+  }, [user?.id]);
 
   useEffect(() => {
     const loadResults = async () => {
@@ -198,12 +206,14 @@ export default function Dashboard({
     const practiceXp = mistakeProgress.reduce((sum, session) => {
       return sum + 40 + Number(session.correct_answers ?? 0) * 3;
     }, 0);
-    const xp = testXp + practiceXp;
+    const dailyXp = dailyResults.reduce((sum, result) => sum + Number(result.xp_earned || 0), 0);
+    const xp = testXp + practiceXp + dailyXp;
     const level = Math.floor(xp / XP_PER_LEVEL) + 1;
     const levelXp = xp % XP_PER_LEVEL;
     const streak = calculateStreak([
       ...results.map((result) => result.completed_at),
       ...mistakeProgress.map((session) => session.completed_at),
+      ...dailyResults.map((result) => result.completed_at),
     ]);
     const badges = [
       { id: "first-test", icon: "🏁", name: "First Test", detail: "Complete your first mock test", earned: results.length >= 1 },
@@ -212,10 +222,11 @@ export default function Dashboard({
       { id: "controls", icon: "🚘", name: "Control Master", detail: "Score 8/8 for vehicle controls", earned: results.some((result) => Number(result.controls_score) >= 8) },
       { id: "comeback", icon: "📈", name: "Comeback", detail: "Improve in mistake practice", earned: mistakeProgress.some((session) => session.improved) },
       { id: "streak", icon: "🔥", name: "3-Day Streak", detail: "Practise on three consecutive days", earned: streak >= 3 },
+      { id: "daily", icon: "⚡", name: "Daily Driver", detail: "Complete a daily challenge", earned: dailyResults.length >= 1 },
     ];
 
     return { xp, level, levelXp, streak, badges };
-  }, [results, mistakeProgress]);
+  }, [results, mistakeProgress, dailyResults]);
 
   const weakestArea = useMemo(() => {
     if (!latest) return "No completed tests yet";
@@ -533,6 +544,24 @@ export default function Dashboard({
         .coach-primary { border:0; background:linear-gradient(135deg,#3ac18b,#1d8d63); color:#f6fff9; }
         .coach-secondary { border:1px solid rgba(136,217,176,.25); background:rgba(146,222,183,.08); color:#eafcef; }
         .coach-loading { margin:0; color:#b9d9cc; }
+        .daily-challenge { display:grid; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(134,239,172,.16); }
+        .daily-title { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+        .daily-title span { color:#86efac; font-size:.62rem; font-weight:900; letter-spacing:.11em; }
+        .daily-title h3 { margin:3px 0 0; font-size:1rem; }
+        .daily-title b { color:#fef08a; font-size:.7rem; white-space:nowrap; }
+        .daily-question { margin:0; color:#f0fdf4; font-size:.78rem; font-weight:750; line-height:1.35; }
+        .daily-options { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+        .daily-options button { min-height:34px; padding:7px; border:1px solid rgba(134,239,172,.18); border-radius:9px; background:rgba(255,255,255,.025); color:#dff5e9; font-size:.66rem; cursor:pointer; }
+        .daily-options button.selected { border-color:#facc15; background:rgba(250,204,21,.1); }
+        .daily-options button.correct { border-color:#4ade80; background:rgba(34,197,94,.14); }
+        .daily-submit { min-height:35px; border:0; border-radius:9px; background:#22c55e; color:#052e16; font-size:.72rem; font-weight:900; cursor:pointer; }
+        .daily-submit:disabled { opacity:.45; cursor:not-allowed; }
+        .daily-result,.daily-error { margin:0; font-size:.68rem; line-height:1.4; color:#bbf7d0; }
+        .daily-error { color:#fecaca; }
+        .leaderboard { display:grid; gap:4px; padding:9px; border-radius:10px; background:rgba(250,204,21,.05); }
+        .leaderboard > strong { color:#fef08a; font-size:.68rem; margin-bottom:2px; }
+        .leaderboard > div { display:flex; justify-content:space-between; color:#dcefe6; font-size:.64rem; }
+        .leaderboard small { color:#a7c9c0; font-size:.62rem; }
 
         .actions-grid {
           display: flex;
@@ -1088,6 +1117,10 @@ export default function Dashboard({
                   streak={gamification.streak}
                   weakestArea={weakestArea}
                   readiness={readiness}
+                />
+                <DailyChallenge
+                  user={user}
+                  onCompleted={(result) => setDailyResults((current) => [result, ...current])}
                 />
               </section>
 
