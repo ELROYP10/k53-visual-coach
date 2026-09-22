@@ -204,6 +204,13 @@ export default async function handler(request, response) {
       return response.status(500).json({ error: "Unable to grant access" });
     }
 
+    const ledgerResponse = await fetch(`${supabaseUrl}/rest/v1/payment_events?on_conflict=payment_id`, {
+      method: "POST",
+      headers: { ...supabaseHeaders, Prefer: "resolution=ignore-duplicates,return=minimal" },
+      body: JSON.stringify({ payment_id: payment.id, user_id: profiles[0].user_id, amount_cents: payment.amount, currency: payment.currency, plan: selectedPlan.id, paid_at: new Date().toISOString() }),
+    });
+    if (!ledgerResponse.ok) console.error("Payment granted but revenue ledger write failed", { paymentId: payment.id, status: ledgerResponse.status });
+
     return response.status(200).json({ received: true });
   } catch (error) {
     console.error("Yoco webhook processing failed", error);
